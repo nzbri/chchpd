@@ -1,0 +1,31 @@
+Package: chchpd
+Type: Package
+Title: Manage and Manipulate Christchurch Parkinson's Studies Data
+Version: 0.0.0.9000
+Authors@R: c(
+    person('Michael', 'MacAskill', email = 'michael.macaskill@nzbri.org', 
+    role = c('cre', 'aut')),
+    person('Toni', 'Pitcher', email = 'toni.pitcher@otago.ac.nz', role = 'ctb'),
+    person('Daniel', 'Myall', email = 'daniel.myall@nzbri.org', role = 'ctb')
+    )
+Description: The Christchurch Parkinson's Longitudinal Study at the New Zealand 
+    Brain Research Institute (NZBRI) has gathered many pieces of data across 
+    multiple participants at one or more time points since 2007. This package 
+    allows analysts to match data from different assessment instruments and 
+    measures within subjects and across time.
+URL: https://www.nzbri.org/labs/parkinsons/, 
+    https://github.com/nzbri/chchpd
+License: License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports: dplyr,
+    ggplot2,
+    googlesheets,
+    janitor,
+    knitr,
+    lubridate,
+    magrittr,
+    readr,
+    stringr,
+    tidyr
+RoxygenNote: 6.1.0
