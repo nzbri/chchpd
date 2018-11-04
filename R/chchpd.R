@@ -9,6 +9,7 @@
 # NAMESPACE file:
 
 #' @importFrom magrittr %>%
+#' @importFrom magrittr %<>%
 NULL # needed just so that roxygen will process the statements above.
 
 
