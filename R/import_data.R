@@ -28,24 +28,24 @@ import_participants <- function(anon = FALSE) {
   }
 
   participants %<>%
-    select(SubjectId, AnonId, DateOfDeath, Status,
-           Excluded, BirthDate, DiseaseGroup, Sex, SymptomOnsetAge,
-           DiagnosisAge, Education, Ethnicity) %>%
-    rename(subject_id = SubjectId,
-           anon_id = AnonId,
-           participant_status = Status,
-           date_of_death = DateOfDeath,
-           excluded_from_followup = Excluded,
-           birth_date = BirthDate,
-           participant_group = DiseaseGroup,
-           sex = Sex,
-           symptom_onset_age = SymptomOnsetAge,
-           diagnosis_age = DiagnosisAge,
-           education = Education,
-           ethnicity = Ethnicity) %>%
-    mutate(birth_date = lubridate::ymd(birth_date),
-           sex = factor(sex, levels = c('Male', 'Female')),
-           participant_status = factor(participant_status))
+    dplyr::select(SubjectId, AnonId, DateOfDeath, Status, Excluded, BirthDate,
+                  DiseaseGroup, Sex, SymptomOnsetAge, DiagnosisAge, Education,
+                  Ethnicity) %>%
+    dplyr::rename(subject_id = SubjectId,
+                  anon_id = AnonId,
+                  participant_status = Status,
+                  date_of_death = DateOfDeath,
+                  excluded_from_followup = Excluded,
+                  birth_date = BirthDate,
+                  participant_group = DiseaseGroup,
+                  sex = Sex,
+                  symptom_onset_age = SymptomOnsetAge,
+                  diagnosis_age = DiagnosisAge,
+                  education = Education,
+                  ethnicity = Ethnicity) %>%
+    dplyr::mutate(birth_date = lubridate::ymd(birth_date),
+                  sex = factor(sex, levels = c('Male', 'Female')),
+                  participant_status = factor(participant_status))
 
   tabulate_duplicates(participants, 'subject_id')
 
