@@ -20,12 +20,8 @@ The package allows NZBRI researchers to access and combine the
   database). Shortly these should all be migrated into one REDCap database
   and hence issues of data integrity should be greatly reduced. The functions
   exposed in this package should serve to ease the transition, and ease the
-  implementtaion of analyses as required, without the current reliance of
+  implementation of analyses as required, without the current reliance upon
   fixed file paths and access to local source files.
-
-  Functions exposed so far:
-
-  \code{\link{import_PET_scan_numbers}}
 }
 \seealso{
 Useful links:

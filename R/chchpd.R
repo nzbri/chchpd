@@ -5,12 +5,10 @@
 # time of installation, to ensure that those packages are installed and hence
 # can be called by this package.
 #
-# Roxygen will take the @import staments below and use them to populate the
+# Roxygen will take the @import statements below and use them to populate the
 # NAMESPACE file:
 
 #' @importFrom magrittr %>%
-#' @import dplyr
-#' @import tidyr
 NULL # needed just so that roxygen will process the statements above.
 
 
@@ -24,9 +22,29 @@ NULL # needed just so that roxygen will process the statements above.
 #'   implementation of analyses as required, without the current reliance upon
 #'   fixed file paths and access to local source files.
 #'
-#'   Functions exposed so far:
-#'
-#'   \code{\link{import_PET_scan_numbers}}
 #' @keywords internal
 "_PACKAGE"
 #> [1] "_PACKAGE"
+
+# functions that run when package is attached/loaded:
+.onAttach <- function(libname, pkgname) {
+  packageStartupMessage(paste0("Data import functions for the Christchurch ",
+                               "Longitudinal Parkinson's Study. Should be run ",
+                               "only by accredited researchers at NZBRI, who ",
+                               "have authorised access to the data sources."))
+}
+
+.onLoad <- function(libname, pkgname){
+  # make an environment to hold vraibles all functions need to know about:
+  assign('chchpd_env', value = new.env(), envir = globalenv())
+
+  # Need titles of the relevant Google sheets. Just simple strings at this
+  # stage. Handles to the files come later, via googlesheets::gs_title()
+  chchpd_env$clinical_filename = 'PD Progression clinical data'
+  chchpd_env$neuropsyc_filename = 'All Z-scores Progression'
+  chchpd_env$scan_filename = 'PD Scan numbers'
+  chchpd_env$participant_filename = 'ParticipantExport'
+  chchpd_env$session_filename = 'SessionExport'
+  chchpd_env$subj_session_map_filename = 'SubjectSessionMapping'
+  chchpd_env$bloods_filename = 'PD Bloods Tracking'
+}
