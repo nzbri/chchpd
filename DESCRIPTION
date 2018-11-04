@@ -25,6 +25,7 @@ Imports: dplyr,
     knitr,
     lubridate,
     magrittr,
+    plotly,
     readr,
     stringr,
     tidyr
