@@ -538,12 +538,12 @@ import_neuropsyc <- function() {
   # extract the subject id and session date from the standardised
   # session id:
   np %<>%
-    separate(col = session_id, into = c('subject_id', 'session_date'),
-             sep = '_', remove = FALSE)
+    tidyr::separate(col = session_id, into = c('subject_id', 'session_date'),
+                    sep = '_', remove = FALSE)
 
   # drop variables to make the data easier to manage:
   np %<>%
-    filter(excluded_y_n != 'Y') %>%
+    dplyr::filter(excluded_y_n != 'Y') %>%
     dplyr::select(subject_id, session_id, excluded_y_n, session_date,
                   full_or_short_assessment, checked, pd_control, timeline,
                   test_order, nzbri_criteria, age, sex, mo_ca,
