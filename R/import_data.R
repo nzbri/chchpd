@@ -45,7 +45,8 @@ import_participants <- function(anon = FALSE) {
                   ethnicity = Ethnicity) %>%
     dplyr::mutate(birth_date = lubridate::ymd(birth_date),
                   sex = factor(sex, levels = c('Male', 'Female')),
-                  participant_status = factor(participant_status))
+                  participant_status = factor(participant_status),
+                  mutate(dead = !is.na(date_of_death)))
 
   tabulate_duplicates(participants, 'subject_id')
 
@@ -60,6 +61,14 @@ import_participants <- function(anon = FALSE) {
 #'
 #' This information is exported priodically from the Alice database.
 #'
+#' @param from_study Optionally specify the name of a specific study to limit
+#'   the records returned to just those from that study. Inspect the sessions
+#'   spreadsheet to see the valid opions. e.g. \code{'PET'} or
+#'   \code{'Follow-up'} for the Progression study.
+#'
+#' @param exclude If \code{TRUE}, don't return sessions that have been excluded
+#'   from a given study.
+#'
 #' @return A dataframe containing the session-group-study data.
 #'
 #' @examples
@@ -67,7 +76,7 @@ import_participants <- function(anon = FALSE) {
 #' sessions = import_sessions()
 #' }
 #' @export
-import_sessions <- function() {
+import_sessions <- function(from_study = NULL, exclude = TRUE) {
 
   # import a file that is regularly exported via a cron job
   # from the Alice database:
@@ -90,6 +99,14 @@ import_sessions <- function() {
     # tidy up errors in subject ids and session suffixes in source data:
     map_to_universal_session_id(make_session_label = FALSE,
                                 remove_double_measures = FALSE)
+
+  if (exclude) {
+    sessions %<>% dplyr::filter(is.na(study_excluded) | study_excluded != TRUE)
+  }
+
+  if (assertthat::is.string(from_study)) {
+    sessions %<>% dplyr::filter(study == from_study)
+  }
 
   return(sessions)
 }

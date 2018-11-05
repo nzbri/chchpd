@@ -4,7 +4,16 @@
 \alias{import_sessions}
 \title{Import links between sessions and studies}
 \usage{
-import_sessions()
+import_sessions(from_study = NULL, exclude = TRUE)
+}
+\arguments{
+\item{from_study}{Optionally specify the name of a specific study to limit
+the records returned to just those from that study. Inspect the sessions
+spreadsheet to see the valid opions. e.g. \code{'PET'} or
+\code{'Follow-up'} for the Progression study.}
+
+\item{exclude}{If \code{TRUE}, don't return sessions that have been excluded
+from a given study.}
 }
 \value{
 A dataframe containing the session-group-study data.
