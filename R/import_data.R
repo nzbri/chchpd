@@ -690,8 +690,8 @@ import_PET <- function(exclude = TRUE) {
   }
 
   # drop unneeded variables and give some unique names:
-  PET %<>% select(-do_not_use_group) %>%
-    dplyr:: rename(pet_np1_date = np1_date,
+  PET %<>% dplyr::select(-do_not_use_group) %>%
+    dplyr::rename(pet_np1_date = np1_date,
                    pet_mri_date = mri_date,
                    pet_mri_scan = mri_scan,
                    pet_dose = dose,
