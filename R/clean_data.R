@@ -44,7 +44,7 @@ map_to_universal_session_id <- function(dataset,
     tidyr::unite(col = input_id, subject_id, session_suffix,
                  sep = '_', remove = TRUE) %>%
     tidyr::unite(col = session_id, standardised_subject_id,
-                 standardised_session_id,sep = '_', remove = FALSE) %>%
+                 standardised_session_id, sep = '_', remove = FALSE) %>%
     dplyr::select(-standardised_session_id, -standardised_subject_id)
 
   # when needed, create a session label in the source dataframe by concatenating
@@ -95,9 +95,9 @@ map_to_universal_session_id <- function(dataset,
       dplyr::group_by(session_id) %>%
       # sort by date, but the name of this variable changes across data frames
       # # (e.g. HADS_date, UPDRS_date, etc):
-      dplyr::arrange_at(dplyr::vars(ends_with('_date'))) %>%
+      dplyr::arrange_at(dplyr::vars(dplyr::ends_with('_date'))) %>%
       # count duplicates within a session:
-      dplyr::mutate(n = row_number()) %>% # n==1 will be the latest one
+      dplyr::mutate(n = dplyr::row_number()) %>% # n==1 will be the latest one
       dplyr::filter(n == 1) %>% # remove all but last record
       dplyr::select(-n) %>% # drop the temporary counter
       dplyr::ungroup()
