@@ -434,15 +434,17 @@ import_medications <- function() {
 
   # conversion if COMT inhibitors are taken. Need to convert CR ldopa first
   # then multiply by COMT factor:
-  meds %<>% dplyr::mutate(comt_ir =
-                            if_else(ir_entacapone > 0, (ir_entacapone * 0.33),
-                                    if_else(ir_tolcapone > 0,
-                                            (ir_tolcapone * 0.5), 0)),
-                          comt_cr =
-                            if_else(cr_entacapone > 0,
-                                    (cr_entacapone * 0.75 * 0.33),
-                                    if_else(cr_tolcapone > 0,
-                                            (cr_tolcapone * 0.75 *0.5), 0)))
+  meds %<>%
+    dplyr::mutate(comt_ir =
+                    dplyr::if_else(ir_entacapone > 0,
+                                   (ir_entacapone * 0.33),
+                                   dplyr::if_else(ir_tolcapone > 0,
+                                                  (ir_tolcapone * 0.5), 0)),
+                  comt_cr =
+                    dplyr::if_else(cr_entacapone > 0,
+                                   (cr_entacapone * 0.75 * 0.33),
+                                   dplyr::if_else(cr_tolcapone > 0,
+                                                  (cr_tolcapone * 0.75 *0.5), 0)))
 
   # conversion of dopamine agonists and other PD meds
   meds %<>% dplyr::mutate(
@@ -575,7 +577,7 @@ import_neuropsyc <- function() {
       session_date = lubridate::ymd(session_date), # convert from char to date
       # make the 'short assessment' column boolean:
       full_assessment =
-        if_else(full_assessment == 'Short', FALSE, TRUE, TRUE)) %>%
+        dplyr::if_else(full_assessment == 'Short', FALSE, TRUE, TRUE)) %>%
     # associate a cognitive status with short assessment sessions. We assign a
     # status here, simply by going back to the next full assessment.
     # carry forward the status values, to fill in blank cells:
