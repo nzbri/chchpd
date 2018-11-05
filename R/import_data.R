@@ -679,23 +679,23 @@ import_PET <- function(exclude = TRUE) {
   PET = googlesheets::gs_read(ss = scan_ss,
                               ws = 'PET_scans') %>%
     # tidy manual data entry errors of session IDs:
-    mutate(subject_id = sanitise_session_ids(subject_id)) %>%
+    dplyr::mutate(subject_id = sanitise_session_ids(subject_id)) %>%
     janitor::clean_names()
 
   # choose whether to filter out excluded records before they get to the user:
   if (exclude) {
     PET %<>%
-      filter(is.na(pet_excluded) | pet_excluded != TRUE) %>%
-      select(-pet_excluded)
+      dplyr::filter(is.na(pet_excluded) | pet_excluded != TRUE) %>%
+      dplyr::select(-pet_excluded)
   }
 
   # drop unneeded variables and give some unique names:
   PET %<>% select(-do_not_use_group) %>%
-    rename(pet_np1_date = np1_date,
-           pet_mri_date = mri_date,
-           pet_mri_scan = mri_scan,
-           pet_dose = dose,
-           pet_notes = notes)
+    dplyr:: rename(pet_np1_date = np1_date,
+                   pet_mri_date = mri_date,
+                   pet_mri_scan = mri_scan,
+                   pet_dose = dose,
+                   pet_notes = notes)
 
   return(PET)
 }
