@@ -46,7 +46,7 @@ import_participants <- function(anon = FALSE) {
     dplyr::mutate(birth_date = lubridate::ymd(birth_date),
                   sex = factor(sex, levels = c('Male', 'Female')),
                   participant_status = factor(participant_status),
-                  mutate(dead = !is.na(date_of_death)))
+                  dplyr::mutate(dead = !is.na(date_of_death)))
 
   tabulate_duplicates(participants, 'subject_id')
 
@@ -168,7 +168,7 @@ import_motor_scores <- function() {
     dplyr::arrange(desc(UPDRS_date)) %>%
     # count duplicates within a session:
     dplyr::mutate(n = row_number()) %>% # n==1 will be the lastest one
-    dplyr:: filter(n == 1) %>% # remove all but last record
+    dplyr::filter(n == 1) %>% # remove all but last record
     dplyr::select(-n, -UPDRS_date) # drop the temporary counter
 
   return(motor_scores)

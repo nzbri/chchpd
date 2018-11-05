@@ -62,7 +62,7 @@ map_to_universal_session_id <- function(dataset,
     # use the idiosyncratic label to map to a standardised session id:
     dplyr::left_join(session_code_map, by = c('session_label' = 'input_id')) %>%
     # set column order:
-    dplyr::select(session_id, everything())
+    dplyr::select(session_id, dplyr::everything())
 
   if (make_session_label & drop_original_columns) {
     dataset %<>% dplyr::select(-session_label)
