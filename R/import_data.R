@@ -46,7 +46,7 @@ import_participants <- function(anon = FALSE) {
     dplyr::mutate(birth_date = lubridate::ymd(birth_date),
                   sex = factor(sex, levels = c('Male', 'Female')),
                   participant_status = factor(participant_status),
-                  dplyr::mutate(dead = !is.na(date_of_death)))
+                  dead = !is.na(date_of_death))
 
   tabulate_duplicates(participants, 'subject_id')
 
