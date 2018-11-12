@@ -4,7 +4,7 @@
 \alias{import_medications}
 \title{Import medications data.}
 \usage{
-import_medications()
+import_medications(concise = TRUE)
 }
 \arguments{
 \item{concise}{If \code{TRUE}, return only the calculated LED (levodopa

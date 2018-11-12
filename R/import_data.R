@@ -28,9 +28,6 @@ import_participants <- function(anon = FALSE) {
   }
 
   participants %<>%
-    dplyr::select(SubjectId, AnonId, DateOfDeath, Status, Excluded, BirthDate,
-                  DiseaseGroup, Sex, SymptomOnsetAge, DiagnosisAge, Education,
-                  Ethnicity) %>%
     dplyr::rename(subject_id = SubjectId,
                   anon_id = AnonId,
                   participant_status = Status,
@@ -46,7 +43,10 @@ import_participants <- function(anon = FALSE) {
     dplyr::mutate(birth_date = lubridate::ymd(birth_date),
                   sex = factor(sex, levels = c('Male', 'Female')),
                   participant_status = factor(participant_status),
-                  dead = !is.na(date_of_death))
+                  dead = !is.na(date_of_death)) %>%
+    dplyr::select(subject_id, anon_id, date_of_death, dead, participant_status,
+                  excluded_from_followup, birth_date, participant_group, sex,
+                  symptom_onset_age, diagnosis_age, education, ethnicity)
 
   tabulate_duplicates(participants, 'subject_id')
 
@@ -200,8 +200,9 @@ import_MDS_UPDRS <- function(concise = TRUE) {
                                            'NA4', 'UR')) %>%
     # safely convert some columns to numeric:
     dplyr::mutate(H_Y = as.numeric(H_Y)) %>%
-    dplyr::mutate_each(funs(as.numeric), starts_with('Q')) %>%
-    dplyr::mutate_each(funs(as.numeric), starts_with('Part_', ignore.case = FALSE)) %>%
+    dplyr::mutate_each(dplyr::funs(as.numeric), dplyr::starts_with('Q')) %>%
+    dplyr::mutate_each(dplyr::funs(as.numeric),
+                       dplyr::starts_with('Part_', ignore.case = FALSE)) %>%
     # we have some columns to explicitly record whether values are known to be
     # missing (vs perhaps just not having been entered yet). Make boolean:
     dplyr::mutate(H_Y_missing      = (H_Y_missing == 'Y'),
@@ -243,7 +244,7 @@ import_MDS_UPDRS <- function(concise = TRUE) {
   # drop records where both H&Y and Part III are missing:
   MDS_UPDRS %<>%
     dplyr::filter(!is.na(H_Y) & !is.na(part_III_missing)) %>%
-    select(-H_Y_missing, -part_III_missing)
+    dplyr::select(-H_Y_missing, -part_III_missing)
 
   if (concise == TRUE) { # return only summary measures
     MDS_UPDRS %<>% dplyr::select(session_id, H_Y, Part_I:Part_III)
@@ -395,7 +396,7 @@ import_HADS <- function(concise = TRUE) {
 #' meds = import_medications()
 #' }
 #' @export
-import_medications <- function() {
+import_medications <- function(concise = TRUE) {
   # get a handle to the clinical spreadsheet:
   clinical_ss = googlesheets::gs_title(chchpd_env$clinical_filename)
 
