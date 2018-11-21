@@ -1,15 +1,12 @@
 #' Allow Google Drive authorisation via a server
 #'
-#' \code{authenticate} To access data on a Google drive requires that the
+#' \code{google_authenticate} To access data on a Google drive requires that the
 #' user is authenticated. This will happen automatically if required when using
 #' any of the \code{import_} functions in this package. The standard
 #' browser-based authorisation process will not work, however, when running
 #' RStudio via a server (because the IP addresses of the user's computer and the
 #' server do not match). This function allows authorisation to proceed for
 #' server-based users.
-#'
-#' #' @param use_server If \code{TRUE}, use copy/paste authentication. If
-#' \code{FALSE}, use browser-based authentication.
 #'
 #' If using RStudio on a server, then you should run this function before
 #' attempting to import any datasets from the Google drive. This will institute
@@ -24,6 +21,9 @@
 #' (this also applies if this file is created in a local folder when
 #' running RStudio on your own computer).
 #'
+#' @param use_server If \code{TRUE}, use the copy/paste authentication process.
+#' If \code{FALSE}, use fully browser-contained authentication.
+#'
 #' The ability to specify \code{use_server = FALSE} is provided for completeness
 #' but shouldn't be necessary in most cases (maybe your script is set up to run
 #' either locally or on the server, and this would allows the authentication
@@ -31,7 +31,7 @@
 #'
 #' @return No return value: the function initiates a process which results in
 #' the writing of a \code{.httr-oauth} token file to disk.
-authenticate <- function(use_server = TRUE) {
+google_authenticate <- function(use_server = TRUE) {
   options(httr_oob_default = use_server)
   googlesheets::gs_auth()
 }
