@@ -38,6 +38,7 @@ Other contributors:
 \itemize{
   \item Toni Pitcher \email{toni.pitcher@otago.ac.nz} [contributor]
   \item Daniel Myall \email{daniel.myall@nzbri.org} [contributor]
+  \item Reza Shoorangiz \email{reza.shoorangiz@nzbri.org} [contributor]
 }
 
 }

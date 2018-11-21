@@ -6,7 +6,8 @@ Authors@R: c(
     person('Michael', 'MacAskill', email = 'michael.macaskill@nzbri.org', 
     role = c('cre', 'aut')),
     person('Toni', 'Pitcher', email = 'toni.pitcher@otago.ac.nz', role = 'ctb'),
-    person('Daniel', 'Myall', email = 'daniel.myall@nzbri.org', role = 'ctb')
+    person('Daniel', 'Myall', email = 'daniel.myall@nzbri.org', role = 'ctb'),
+    person('Reza', 'Shoorangiz', email = 'reza.shoorangiz@nzbri.org', role = 'ctb')
     )
 Description: The Christchurch Parkinson's Longitudinal Study at the New Zealand 
     Brain Research Institute (NZBRI) has gathered many pieces of data across 
@@ -19,15 +20,15 @@ License: License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports: assertthat,
-    dplyr,
-    ggplot2,
-    googlesheets,
-    janitor,
-    knitr,
-    lubridate,
-    magrittr,
-    plotly,
-    readr,
-    stringr,
-    tidyr
+    dplyr (>= 0.7.8),
+    ggplot2 (>= 3.1.0),
+    googlesheets (>= 0.3.0),
+    janitor (>= 1.1.1),
+    knitr (>= 1.20),
+    lubridate (>= 1.7.4),
+    magrittr (>= 1.5),
+    plotly (>= 4.8),
+    readr (>= 1.1.1),
+    stringr (>= 1.3.1),
+    tidyr (>= 0.8.2)
 RoxygenNote: 6.1.0

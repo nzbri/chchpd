@@ -36,7 +36,7 @@ NULL # needed just so that roxygen will process the statements above.
 }
 
 .onLoad <- function(libname, pkgname){
-  # make an environment to hold vraibles all functions need to know about:
+  # make an environment to hold variables all functions need to know about:
   assign('chchpd_env', value = new.env(), envir = globalenv())
 
   # Need titles of the relevant Google sheets. Just simple strings at this

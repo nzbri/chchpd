@@ -1,3 +1,41 @@
+#' Allow Google Drive authorisation via a server
+#'
+#' \code{authenticate} To access data on a Google drive requires that the
+#' user is authenticated. This will happen automatically if required when using
+#' any of the \code{import_} functions in this package. The standard
+#' browser-based authorisation process will not work, however, when running
+#' RStudio via a server (because the IP addresses of the user's computer and the
+#' server do not match). This function allows authorisation to proceed for
+#' server-based users.
+#'
+#' #' @param use_server If \code{TRUE}, use copy/paste authentication. If
+#' \code{FALSE}, use browser-based authentication.
+#'
+#' If using RStudio on a server, then you should run this function before
+#' attempting to import any datasets from the Google drive. This will institute
+#' a different authentication process. You will still be taken to a webpage,
+#' but instead of authenticating within that page, you will be given a string
+#' of characters to copy. You must then paste that into the RStudio console
+#' (there should be a prompt there expecting this input). This will generate
+#' an authentication token that will be stored on your folder on the server.
+#' Be aware that this token (in the \code{.httr-oauth} file) could allow any
+#' user to access your files and privileges on the Google drive. Do not
+#' transmit or distribute it, or allow it to be included in version control
+#' (this also applies if this file is created in a local folder when
+#' running RStudio on your own computer).
+#'
+#' The ability to specify \code{use_server = FALSE} is provided for completeness
+#' but shouldn't be necessary in most cases (maybe your script is set up to run
+#' either locally or on the server, and this would allows the authentication
+#' method to be specified conditionally).
+#'
+#' @return No return value: the function initiates a process which results in
+#' the writing of a \code{.httr-oauth} token file to disk.
+authenticate <- function(use_server = TRUE) {
+  options(httr_oob_default = use_server)
+  googlesheets::gs_auth()
+}
+
 #' Import participant demographics
 #'
 #' \code{import_participants} Access the participant information that should be
