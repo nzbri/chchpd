@@ -31,6 +31,7 @@
 #'
 #' @return No return value: the function initiates a process which results in
 #' the writing of a \code{.httr-oauth} token file to disk.
+#' @export
 google_authenticate <- function(use_server = TRUE) {
   options(httr_oob_default = use_server)
   googlesheets::gs_auth()
