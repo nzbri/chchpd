@@ -106,6 +106,39 @@ map_to_universal_session_id <- function(dataset,
   return(dataset)
 }
 
+#' Tabulate number of duplicated values in a variable
+#'
+#' \code{tabulate_duplicates} Produce a table of which values are duplicated
+#' within a specified variable in a dataframe, and their number of repetitions.
+#'
+#' @param df The dataframe containing the variable of interest.
+#' @param varname The variable of interest. Must be given as a string to avoid
+#' dplyr's non-standard evaluation.
+#' @param print_results If \code{TRUE}, print the result as a
+#' \code{knitr::kable} formatted table as well as returning the dataframe.
+#'
+#' @examples
+#' \dontrun{
+#' duplicate_bloods = tabulate_duplicates(bloods, 'subject_id')
+#' }
+#' @export
+tabulate_duplicates <- function(df, varname, print_results = FALSE) {
+  duplicates = df %>%
+    dplyr::group_by_(varname) %>% # group_by_() works programatically
+    dplyr::summarise(n = n()) %>%
+    dplyr::filter(n > 1) %>%
+    dplyr::arrange_('n', varname) %>% # arrange_() works programatically
+    dplyr::arrange(desc(n)) %>%
+    dplyr::select_(varname, 'n')
+
+  if (print_results & nrow(duplicates) > 0) {
+    print('Duplicates:')
+    print(knitr::kable(duplicates))
+  }
+
+  return(duplicates)
+}
+
 sanitise_session_ids <- function(ids) {
   # session IDs are sometimes manually entered incorrectly in the
   # source data. We clean them up to improve matching across datasets.
@@ -133,24 +166,3 @@ sanitise_session_ids <- function(ids) {
   return(ids)
 }
 
-tabulate_duplicates <- function(df, varname, print_results = FALSE) {
-  # produce a table of which values are duplicated within a
-  # specified variable in a dataframe, and their number
-  # of repetitions. varname must be given as a string to
-  # avoid dplyr's non-standard evaluation.
-  duplicates = df %>%
-    dplyr::group_by_(varname) %>% # group_by_() works programatically
-    dplyr::summarise(n = n()) %>%
-    dplyr::filter(n > 1) %>%
-    dplyr::arrange_('n', varname) %>% # arrange_() works programatically
-    dplyr::arrange(desc(n)) %>%
-    dplyr::select_(varname, 'n')
-
-  if (print_results & nrow(duplicates) > 0) {
-    print('Duplicates:')
-    print(knitr::kable(duplicates))
-  }
-
-  return(duplicates)
-
-}
