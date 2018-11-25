@@ -69,6 +69,7 @@ import_participants <- function(anon = FALSE) {
   participants %<>%
     dplyr::rename(subject_id = SubjectId,
                   anon_id = AnonId,
+                  survey_id = SurveyId,
                   participant_status = Status,
                   date_of_death = DateOfDeath,
                   excluded_from_followup = Excluded,
@@ -83,9 +84,10 @@ import_participants <- function(anon = FALSE) {
                   sex = factor(sex, levels = c('Male', 'Female')),
                   participant_status = factor(participant_status),
                   dead = !is.na(date_of_death)) %>%
-    dplyr::select(subject_id, anon_id, date_of_death, dead, participant_status,
-                  excluded_from_followup, birth_date, participant_group, sex,
-                  symptom_onset_age, diagnosis_age, education, ethnicity)
+    dplyr::select(subject_id, anon_id, survey_id, date_of_death, dead,
+                  participant_status, excluded_from_followup, birth_date,
+                  participant_group, sex, symptom_onset_age, diagnosis_age,
+                  education, ethnicity)
 
   tabulate_duplicates(participants, 'subject_id')
 
