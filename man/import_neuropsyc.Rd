@@ -4,7 +4,7 @@
 \alias{import_neuropsyc}
 \title{Import neuropsyc data.}
 \usage{
-import_neuropsyc()
+import_neuropsyc(concise = TRUE)
 }
 \arguments{
 \item{concise}{If \code{TRUE}, return only the selected variables (e.g. MoCA,

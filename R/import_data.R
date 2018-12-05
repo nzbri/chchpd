@@ -558,7 +558,7 @@ import_medications <- function(concise = TRUE) {
 #' np = import_neuropsyc()
 #' }
 #' @export
-import_neuropsyc <- function() {
+import_neuropsyc <- function(concise = TRUE) {
   # get a handle to the neuropsyc spreadsheet:
   neuropsyc_ss = googlesheets::gs_title(chchpd_env$neuropsyc_filename)
 
@@ -585,16 +585,29 @@ import_neuropsyc <- function() {
     tidyr::separate(col = session_id, into = c('subject_id', 'session_date'),
                     sep = '_', remove = FALSE)
 
-  # drop variables to make the data easier to manage:
   np %<>%
-    dplyr::filter(excluded_y_n != 'Y') %>%
+    dplyr::filter(excluded_y_n != 'Y')
+
+  # drop variables to make the data easier to manage:
+  if (concise == TRUE) { # return only summary measures
+    np %<>%
     dplyr::select(subject_id, session_id, excluded_y_n, session_date,
-                  full_or_short_assessment, checked, pd_control, timeline,
-                  test_order, nzbri_criteria, age, sex, mo_ca,
+                  full_or_short_assessment, checked, pd_control,
+                  nzbri_criteria, age, sex, mo_ca,
                   total_all_domains, npi_sleep, attention_total,
                   executive_function_total, visuo_total, learning_memory_total,
-                  language_total) %>%
-    dplyr::rename(excluded_np = excluded_y_n, # name them neatly
+                  language_total)
+    } else { # return most columns, for more detailed analysis
+      np %<>%
+        dplyr::select(subject_id, session_id, excluded_y_n, session_date,
+                      full_or_short_assessment, checked, pd_control,
+                      nzbri_criteria, age, sex, mo_ca,
+                      wtar_predicted_wais_iii_fsiq,
+                      adas_cog_70:version) # most indic tests are here
+    }
+
+  np %<>% # name selected variables neatly
+    dplyr::rename(excluded_np = excluded_y_n,
                   full_assessment = full_or_short_assessment,
                   np_group = pd_control,
                   cognitive_status = nzbri_criteria,
@@ -650,8 +663,10 @@ import_neuropsyc <- function() {
                   date_baseline = dplyr::first(session_date),
                   global_z_baseline = dplyr::first(global_z),
                   diagnosis_baseline = dplyr::first(diagnosis),
-                  years_from_baseline = difftime(session_date, date_baseline,
-                                                 units = 'days')/365.25,
+                  session_number = dplyr::row_number(),
+                  years_from_baseline =
+                    round(difftime(session_date, date_baseline,
+                                   units = 'days')/365.25, digits = 2),
                   # Find longest followup time:
                   FU_latest = max(years_from_baseline)) %>%
     dplyr::ungroup() # leaving it grouped can cause issues later
