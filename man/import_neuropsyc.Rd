@@ -8,8 +8,8 @@ import_neuropsyc(concise = TRUE)
 }
 \arguments{
 \item{concise}{If \code{TRUE}, return only the selected variables (e.g. MoCA,
-global z, domain z. If \code{FALSE}, also return all individual test
-values.}
+global z, domain z). If \code{FALSE}, also return all individual test
+scores, allowing more detailed analyses.}
 }
 \value{
 A dataframe containing medication doses.
