@@ -76,6 +76,7 @@ import_participants <- function(anon = FALSE) {
                   birth_date = BirthDate,
                   participant_group = DiseaseGroup,
                   sex = Sex,
+                  side_of_onset = SideAffected,
                   symptom_onset_age = SymptomOnsetAge,
                   diagnosis_age = DiagnosisAge,
                   education = Education,
@@ -83,11 +84,12 @@ import_participants <- function(anon = FALSE) {
     dplyr::mutate(birth_date = lubridate::ymd(birth_date),
                   sex = factor(sex, levels = c('Male', 'Female')),
                   participant_status = factor(participant_status),
-                  dead = !is.na(date_of_death)) %>%
+                  dead = !is.na(date_of_death),
+                  side_of_onset = factor(side_of_onset)) %>%
     dplyr::select(subject_id, anon_id, survey_id, date_of_death, dead,
                   participant_status, excluded_from_followup, birth_date,
-                  participant_group, sex, symptom_onset_age, diagnosis_age,
-                  education, ethnicity)
+                  participant_group, sex, side_of_onset, symptom_onset_age,
+                  diagnosis_age, education, ethnicity)
 
   tabulate_duplicates(participants, 'subject_id')
 
