@@ -59,7 +59,8 @@ import_participants <- function(anon = FALSE) {
   # import a file that is regularly exported via a cron job
   # from the Alice database:
   participants = googlesheets::gs_title(chchpd_env$participant_filename) %>%
-    googlesheets::gs_read(na = c('NA', 'None'))
+    googlesheets::gs_read(na = c('NA', 'None')) %>%
+    janitor::clean_names()
 
   # report errors where cell contents don't match expected type for the column:
   if (nrow(readr::problems(participants)) > 0) {
@@ -67,29 +68,24 @@ import_participants <- function(anon = FALSE) {
   }
 
   participants %<>%
-    dplyr::rename(subject_id = SubjectId,
-                  anon_id = AnonId,
-                  survey_id = SurveyId,
-                  participant_status = Status,
-                  date_of_death = DateOfDeath,
-                  excluded_from_followup = Excluded,
-                  birth_date = BirthDate,
-                  participant_group = DiseaseGroup,
-                  sex = Sex,
-                  side_of_onset = SideAffected,
-                  symptom_onset_age = SymptomOnsetAge,
-                  diagnosis_age = DiagnosisAge,
-                  education = Education,
-                  ethnicity = Ethnicity) %>%
-    dplyr::mutate(birth_date = lubridate::ymd(birth_date),
+    dplyr::rename(participant_status = status,
+                  excluded_from_followup = excluded,
+                  participant_group = disease_group,
+                  side_of_onset = side_affected) %>%
+    # replace missing string values with NA:
+    dplyr::mutate(handedness = dplyr::na_if(handedness, ''),
+                  side_of_onset = dplyr::na_if(side_of_onset, 'Unknown')) %>%
+    # set format of some variables:
+    dplyr::mutate(handedness = factor(handedness),
+                  side_of_onset = factor(side_of_onset),
+                  birth_date = lubridate::ymd(birth_date),
                   sex = factor(sex, levels = c('Male', 'Female')),
                   participant_status = factor(participant_status),
-                  dead = !is.na(date_of_death),
-                  side_of_onset = factor(side_of_onset)) %>%
+                  dead = !is.na(date_of_death)) %>%
     dplyr::select(subject_id, anon_id, survey_id, date_of_death, dead,
                   participant_status, excluded_from_followup, birth_date,
-                  participant_group, sex, side_of_onset, symptom_onset_age,
-                  diagnosis_age, education, ethnicity)
+                  participant_group, sex, side_of_onset, handedness,
+                  symptom_onset_age, diagnosis_age, education, ethnicity)
 
   tabulate_duplicates(participants, 'subject_id')
 
