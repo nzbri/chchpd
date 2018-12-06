@@ -82,10 +82,18 @@ import_participants <- function(anon = FALSE) {
                   sex = factor(sex, levels = c('Male', 'Female')),
                   participant_status = factor(participant_status),
                   dead = !is.na(date_of_death)) %>%
+    # calculate age as at today (even if dead). Generally for analyses, would
+    # use the age from the session table (i.e. age at which the data was
+    # gathered):
+    dplyr::mutate(age_today =
+                    round(difftime(lubridate::today(), birth_date,
+                                   units = 'days')/365.25,
+                          digits = 1)) %>%
     dplyr::select(subject_id, anon_id, survey_id, date_of_death, dead,
-                  participant_status, excluded_from_followup, birth_date,
-                  participant_group, sex, side_of_onset, handedness,
-                  symptom_onset_age, diagnosis_age, education, ethnicity)
+                  participant_status, birth_date, age_today,
+                  excluded_from_followup, participant_group, sex, side_of_onset,
+                  handedness, symptom_onset_age, diagnosis_age, education,
+                  ethnicity)
 
   tabulate_duplicates(participants, 'subject_id')
 
@@ -121,16 +129,14 @@ import_sessions <- function(from_study = NULL, exclude = TRUE) {
   # from the Alice database:
   sessions = googlesheets::gs_title(chchpd_env$session_filename) %>%
     googlesheets::gs_read() %>%
+    janitor::clean_names() %>%
     # extract session suffix (e.g. F2, D0), useful for some purposes:
-    dplyr::mutate(session_suffix = stringr::str_match(SessionId, '_(.*)')[,2]) %>%
-    dplyr::select(SessionId, SubjectId, session_suffix, Study, Date, StudyGroup,
-                  StudyExcluded, MRIScanNo) %>%
-    dplyr::rename(session_label = SessionId,
-                  subject_id = SubjectId,
-                  session_date = Date,
-                  study = Study,
-                  study_group = StudyGroup,
-                  study_excluded = StudyExcluded) %>%
+    dplyr::mutate(session_suffix =
+                    stringr::str_match(session_id, '_(.*)')[,2]) %>%
+    dplyr::select(session_id, subject_id, session_suffix, study, date,
+                  study_group, study_excluded, mri_scan_no) %>%
+    dplyr::rename(session_label = session_id,
+                  session_date = date) %>%
     dplyr::mutate(study = factor(study),
                   session_date = lubridate::ymd(session_date)) %>%
     # filter out scheduled future visits:
@@ -146,6 +152,27 @@ import_sessions <- function(from_study = NULL, exclude = TRUE) {
   if (assertthat::is.string(from_study)) {
     sessions %<>% dplyr::filter(study == from_study)
   }
+
+  # need to calculate the age at each session. To do this, we require the birth
+  # date of each subject. Eventually we will stop returning this to users via
+  # the import_participant() function, so we can't expect the user to feed the
+  # birth dates to this function.
+  # Unfortunately that means we have to call that function ourselves in order
+  # to get the birth date behind the scenes. This likely means that
+  # import_participant() will get called twice in most analysis pipelines, once
+  # explcitly by the user, and once implicitly in this function.
+  DOBs = import_participants() %>%
+    dplyr::select(subject_id, birth_date)
+
+  # join the sessions to the DOBs to calculate age at each session:
+  sessions %<>%
+    dplyr::left_join(DOBs, by = 'subject_id') %>%
+    dplyr::mutate(age = as.numeric(round(difftime(session_date, birth_date,
+                                       units = 'days')/365.25, digits = 1))) %>%
+    dplyr::select(session_id:session_date, age, study_group:mri_scan_no) %>%
+    dplyr::group_by(subject_id) %>%
+    dplyr::arrange(subject_id, session_date) %>%
+    dplyr::ungroup()
 
   return(sessions)
 }
@@ -192,7 +219,7 @@ import_motor_scores <- function() {
   old %<>%
     dplyr::select(session_id, visit_date, H_Y, MDS_Part_III) %>%
     # make names consistent:
-    dplyr::rename(UPDRS_date = visit_date, Part_III= MDS_Part_III) %>%
+    dplyr::rename(UPDRS_date = visit_date, Part_III = MDS_Part_III) %>%
     dplyr::mutate(UPDRS_source = 'UPDRS 1987')
 
   motor_scores = dplyr::bind_rows(old, MDS)
@@ -236,7 +263,7 @@ import_MDS_UPDRS <- function(concise = TRUE) {
   MDS_UPDRS = googlesheets::gs_read(ss = clinical_ss,
                                     ws = 'MDS_UPDRS',
                                     na = c('na', 'NA', 'NA1', 'NA2', 'NA3',
-                                           'NA4', 'UR')) %>%
+                                           'NA4', 'NA5', 'NA6', 'UR')) %>%
     # safely convert some columns to numeric:
     dplyr::mutate(H_Y = as.numeric(H_Y)) %>%
     dplyr::mutate_each(dplyr::funs(as.numeric), dplyr::starts_with('Q')) %>%
@@ -392,7 +419,8 @@ import_HADS <- function(concise = TRUE) {
                                                          readr::col_character(),
                                                 HADS_date = readr::col_date(),
                                                 .default = readr::col_integer()),# the item scores
-                               na = c('NA', 'NA1', 'NA2', 'NA3'),
+                               na = c('NA', 'NA1', 'NA2', 'NA3', 'NA4', 'NA5',
+                                      'NA6'),
                                range = googlesheets::cell_cols('A:Q')) # don't
   # include the totals columns, as they don't deal well with missing values and
   # we calculate them afresh below anyway.
@@ -442,7 +470,8 @@ import_medications <- function(concise = TRUE) {
   # Medications list:
   meds = googlesheets::gs_read(ss = clinical_ss,
                                ws = 'Medication',
-                               na = c('NA', 'NA1', 'NA2', 'NA3'))
+                               na = c('NA', 'NA1', 'NA2', 'NA3', 'NA4',
+                                      'NA5', 'NA6'))
 
   # report errors where cell contents don't match expected type for the column:
   if (nrow(readr::problems(meds)) > 0) {
@@ -591,7 +620,7 @@ import_neuropsyc <- function(concise = TRUE) {
     np %<>%
     dplyr::select(subject_id, session_id, excluded_y_n, session_date,
                   full_or_short_assessment, checked, pd_control,
-                  nzbri_criteria, age, sex, mo_ca,
+                  nzbri_criteria, mo_ca,
                   total_all_domains, npi_sleep, attention_total,
                   executive_function_total, visuo_total, learning_memory_total,
                   language_total)
@@ -599,7 +628,7 @@ import_neuropsyc <- function(concise = TRUE) {
       np %<>%
         dplyr::select(subject_id, session_id, excluded_y_n, session_date,
                       full_or_short_assessment, checked, pd_control,
-                      nzbri_criteria, age, sex, mo_ca,
+                      nzbri_criteria, mo_ca,
                       wtar_predicted_wais_iii_fsiq,
                       adas_cog_70:version) # most indic tests are here
     }
@@ -621,8 +650,6 @@ import_neuropsyc <- function(concise = TRUE) {
   np %<>%
     # label some factors neatly:
     dplyr::mutate(
-      sex = factor(sex, levels = c('M', 'F'),
-                   labels = c('Male', 'Female')),
       cognitive_status = factor(cognitive_status,
                                 levels = c('U', 'MCI', 'PDD'),
                                 labels = c('N', 'MCI', 'D'),
@@ -657,17 +684,20 @@ import_neuropsyc <- function(concise = TRUE) {
     dplyr::arrange(subject_id, session_date) %>%
     dplyr::group_by(subject_id) %>% # within each subject
     # get the baseline values of some variables:
-    dplyr::mutate(age_baseline = dplyr::first(age),
-                  date_baseline = dplyr::first(session_date),
+    dplyr::mutate(date_baseline = dplyr::first(session_date),
                   global_z_baseline = dplyr::first(global_z),
                   diagnosis_baseline = dplyr::first(diagnosis),
                   session_number = dplyr::row_number(),
                   years_from_baseline =
-                    round(difftime(session_date, date_baseline,
-                                   units = 'days')/365.25, digits = 2),
+                    as.numeric(round(difftime(session_date, date_baseline,
+                                              units = 'days')/365.25,
+                                     digits = 2)),
                   # Find longest followup time:
                   FU_latest = max(years_from_baseline)) %>%
-    dplyr::ungroup() # leaving it grouped can cause issues later
+    dplyr::ungroup() %>% # leaving it grouped can cause issues later
+    dplyr::select(session_id:excluded_np, session_number, years_from_baseline,
+                  np_group, diagnosis_baseline, cognitive_status, diagnosis,
+                  dplyr::everything(), -session_date, -subject_id)
 
   return(np)
 }
@@ -815,7 +845,8 @@ import_hallucinations <- function() {
   hallucinations =
     googlesheets::gs_read(ss = clinical_ss,
                           ws = 'Hallucinations Questionnaire',
-                          na = c('na', 'NA', 'NA1', 'NA2', 'NA3', 'NA4', 'UR'),
+                          na = c('na', 'NA', 'NA1', 'NA2', 'NA3', 'NA4',
+                                 'NA5', 'NA6', 'UR'),
                           # this sheet has a row above the column names:
                           skip = 1) %>%
     janitor::clean_names() %>% # remove spaces from variable names, etc
