@@ -47,9 +47,9 @@ locally.
 
 You can view the repository at https://github.com/nzbri/chchpd. 
 Please use the issue tracker at https://github.com/nzbri/chchpd/issues to report 
-any problems. If the repository is has not been made public, you will need to 
-get your Github account authorised by Michael MacAskill or Daniel Myall in 
-order to view and interact with it.
+any problems. Bear in mind that this repository is public to the world, so if 
+reporting data-related issues, be careful not to post anything that contains 
+identifiers.
 
 ## Example
 
@@ -72,15 +72,22 @@ standardised session code, which has a form like `999BIO_2016-0-28`. When
 importing various data sources (like HADS or UPDRS), their idosyncratic session 
 labels are replaced by this standardised form. Thus it is easy to join multiple 
 tables togther systematically, as below. Often a key step is to specify just a 
-restricted set of sessions, by specifying a particular study to filter them by:
+restricted set of sessions, by specifying a particular study to filter them by. 
+In the example code below, we select just those sessions in the 'PET' study.
 
 ```{r example, eval=FALSE, include=TRUE}
-# basic example code
-participants = import_participants()
-sessions = import_sessions(from_study = 'PET')
-np = import_neuropsyc()
-updrs = import_motor_scores()
+# load necessary packages:
+library(chchpd)
+library(magrittr) # for %>% pipe operator
+library(dplyr)    # for joining functions
 
+# import datasets of interest:
+participants = import_participants()
+sessions     = import_sessions(from_study = 'PET')
+np           = import_neuropsyc()
+updrs        = import_motor_scores()
+
+# bind the records together, linked by subject or session IDs:
 dat = right_join(participants, sessions, by = 'subject_id') %>% 
   left_join(np, by = 'session_id') %>% 
   left_join(updrs, by = 'session_id')
