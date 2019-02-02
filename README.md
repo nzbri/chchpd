@@ -47,7 +47,7 @@ anything that contains identifiers.
 ## Example
 
 Records across the various tables must be joined using either
-`subject_id` as an index (e.g. for linking to the participant table, as
+`subject_id` as an index (e.g. for linking to the participant table, as
 it includes information, such as sex, that is constant for a subject),
 or `session_id` (to join various measures gathered at approximately the
 same assessment session for a given participant, and which might change
@@ -61,12 +61,12 @@ the follow-up session two years after baseline recruitment session in
 the Progression study. But the same session might also have served as
 the baseline in the more selective PET study, and been labelled, say,
 `999BIO_PET0`. This often idiosyncratic labelling is cured by the
-subject session maping table, which would have a record for both the
+subject session mapping table, which would have a record for both the
 `999BIO_F2` and `999BIO_PET0` sessions, linking them to the same
 standardised session code, which has a form like `999BIO_2016-0-28`.
 When importing various data sources (like HADS or UPDRS), their
-idosyncratic session labels are replaced by this standardised form. Thus
-it is easy to join multiple tables togther systematically, as below.
+idiosyncratic session labels are replaced by this standardised form. Thus
+it is easy to join multiple tables together systematically, as below.
 Often a key step is to specify just a restricted set of sessions, by
 specifying a particular study to filter them by. In the example code
 below, we select just those sessions in the ‘PET’ study.
