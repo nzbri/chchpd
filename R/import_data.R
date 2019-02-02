@@ -26,7 +26,7 @@
 #'
 #' The ability to specify \code{use_server = FALSE} is provided for completeness
 #' but shouldn't be necessary in most cases (maybe your script is set up to run
-#' either locally or on the server, and this would allows the authentication
+#' either locally or on the server, and this would allow the authentication
 #' method to be specified conditionally).
 #'
 #' @return No return value: the function initiates a process which results in
