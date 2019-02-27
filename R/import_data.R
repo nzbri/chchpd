@@ -620,7 +620,7 @@ import_neuropsyc <- function(concise = TRUE) {
     np %<>%
     dplyr::select(subject_id, session_id, excluded_y_n, session_date,
                   full_or_short_assessment, checked, pd_control,
-                  nzbri_criteria, mo_ca,
+                  nzbri_criteria, mo_ca, wtar_predicted_wais_iii_fsiq,
                   total_all_domains, npi_sleep, attention_total,
                   executive_function_total, visuo_total, learning_memory_total,
                   language_total)
@@ -639,6 +639,7 @@ import_neuropsyc <- function(concise = TRUE) {
                   np_group = pd_control,
                   cognitive_status = nzbri_criteria,
                   MoCA = mo_ca,
+                  WTAR = wtar_predicted_wais_iii_fsiq,
                   global_z = total_all_domains,
                   attention_domain = attention_total,
                   executive_domain = executive_function_total,
