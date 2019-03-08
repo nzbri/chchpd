@@ -56,32 +56,22 @@ map_to_universal_session_id <- function(dataset,
                    remove = drop_original_columns)
   }
 
-  # now look up the session label from the given dataset, map it to the
-  # universal session id:
+  # first identify records that won't match:
+  unmatched = dplyr::anti_join(dataset, session_code_map,
+                               by = c('session_label' = 'input_id'))
+
+  # now match, by looking up the session label from the given dataset, mapping
+  # it to the universal session id:
   dataset %<>%
     # use the idiosyncratic label to map to a standardised session id:
     dplyr::left_join(session_code_map, by = c('session_label' = 'input_id')) %>%
     # set column order:
     dplyr::select(session_id, dplyr::everything())
 
-  if (make_session_label & drop_original_columns) {
-    dataset %<>% dplyr::select(-session_label)
-  }
-
-  # show records that failed to match to a universal session ID:
-  unmatched = dataset %>%
-    dplyr::filter(is.na(session_id) | session_id == '0') %>% # not sure why but
-    # with meds at least, we get 0 rather than NA for non-matches
-    dplyr::select(-session_id) # is NA
-
-  # only produce output if there is at least 1 non-match:
+  # produce error output if there is at least 1 non-match:
   if (nrow(unmatched) > 0 ) {
-    print('MISSES!!!! Failed to match to a universal session ID:')
-    if (ncol(unmatched) < 6) {
-      print(knitr::kable(unmatched))
-    } else {
-      print(knitr::kable(unmatched[1:5]))
-    }
+    print('Records failed to match to a universal session ID:')
+    print(knitr::kable(unmatched[1:4]))
   }
 
   # some people got multiple assessments of some measures per overall session
@@ -101,6 +91,10 @@ map_to_universal_session_id <- function(dataset,
       dplyr::filter(n == 1) %>% # remove all but last record
       dplyr::select(-n) %>% # drop the temporary counter
       dplyr::ungroup()
+  }
+
+  if (make_session_label & drop_original_columns) {
+    dataset %<>% dplyr::select(-session_label)
   }
 
   return(dataset)
