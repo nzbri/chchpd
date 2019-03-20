@@ -18,7 +18,7 @@ A dataframe containing the participant data.
 constant across all sessions (for example, date of birth, sex, etc).
 }
 \details{
-This information is exported priodically from the Alice database.
+This information is exported periodically from the Alice database.
 }
 \examples{
 \dontrun{

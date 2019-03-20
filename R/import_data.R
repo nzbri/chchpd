@@ -42,7 +42,7 @@ google_authenticate <- function(use_server = TRUE) {
 #' \code{import_participants} Access the participant information that should be
 #' constant across all sessions (for example, date of birth, sex, etc).
 #'
-#' This information is exported priodically from the Alice database.
+#' This information is exported periodically from the Alice database.
 #'
 #' @param anon If \code{TRUE}, return the anonymous ID. Otherwise, return the
 #' in-house, non-secure ID.
