@@ -4,11 +4,18 @@
 \alias{import_participants}
 \title{Import participant demographics}
 \usage{
-import_participants(anon = FALSE)
+import_participants(anon_id = TRUE, identifiers = FALSE)
 }
 \arguments{
-\item{anon}{If \code{TRUE}, return the anonymous ID. Otherwise, return the
+\item{anon_id}{If \code{TRUE}, return the anonymous ID. Otherwise, return the
 in-house, non-secure ID.}
+
+\item{identifiers}{If \code{TRUE}, include identifying information (names,
+dates of birth & death, etc). This should not be used routinely for research.
+i.e. this information should only ever be needed for study management
+purposes.
+\code{anon_id} must be set to \code{FALSE} for this parameter to have any
+effect.}
 }
 \value{
 A dataframe containing the participant data.

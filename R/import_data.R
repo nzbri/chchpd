@@ -44,8 +44,15 @@ google_authenticate <- function(use_server = TRUE) {
 #'
 #' This information is exported periodically from the Alice database.
 #'
-#' @param anon If \code{TRUE}, return the anonymous ID. Otherwise, return the
+#' @param anon_id If \code{TRUE}, return the anonymous ID. Otherwise, return the
 #' in-house, non-secure ID.
+#'
+#' @param identifiers If \code{TRUE}, include identifying information (names,
+#' dates of birth & death, etc). This should not be used routinely for research.
+#' i.e. this information should only ever be needed for study management
+#' purposes.
+#' \code{anon_id} must be set to \code{FALSE} for this parameter to have any
+#' effect.
 #'
 #' @return A dataframe containing the participant data.
 #'
@@ -54,7 +61,7 @@ google_authenticate <- function(use_server = TRUE) {
 #' participants = import_participants()
 #' }
 #' @export
-import_participants <- function(anon = FALSE) {
+import_participants <- function(anon_id = TRUE, identifiers = FALSE) {
 
   # import a file that is regularly exported via a cron job
   # from the Alice database:
@@ -88,14 +95,37 @@ import_participants <- function(anon = FALSE) {
     dplyr::mutate(age_today =
                     round(difftime(lubridate::today(), birth_date,
                                    units = 'days')/365.25,
-                          digits = 1)) %>%
-    dplyr::select(subject_id, anon_id, survey_id, date_of_death, dead,
-                  participant_status, birth_date, age_today,
-                  excluded_from_followup, participant_group, sex, side_of_onset,
-                  handedness, symptom_onset_age, diagnosis_age, education,
-                  ethnicity)
+                          digits = 1))
 
-  tabulate_duplicates(participants, 'subject_id')
+  if (anon_id) { # return only anonymous id and no identifiers:
+    participants %<>%
+      dplyr::select(anon_id, dead, participant_status, age_today,
+                    excluded_from_followup, participant_group, sex,
+                    side_of_onset, handedness, symptom_onset_age, diagnosis_age,
+                    education, ethnicity)
+  }
+  else if (identifiers) { # for management purposes only, return names, DOB, etc
+    participants %<>%
+      dplyr::select(subject_id, survey_id, first_name, last_name, date_of_death,
+                    dead, participant_status, birth_date, age_today,
+                    excluded_from_followup, participant_group, sex,
+                    side_of_onset, handedness, symptom_onset_age, diagnosis_age,
+                    education, ethnicity)
+  }
+  else { # return internal id code but no other identifiers:
+    participants %<>%
+      dplyr::select(subject_id, survey_id, dead, participant_status, age_today,
+                    excluded_from_followup, participant_group, sex,
+                    side_of_onset, handedness, symptom_onset_age, diagnosis_age,
+                    education, ethnicity)
+  }
+
+  if (anon_id) {
+    tabulate_duplicates(participants, 'anon_id')
+  } else {
+    tabulate_duplicates(participants, 'subject_id')
+  }
+
 
   return(participants)
 }
