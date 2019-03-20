@@ -190,8 +190,8 @@ import_sessions <- function(from_study = NULL, exclude = TRUE) {
   # Unfortunately that means we have to call that function ourselves in order
   # to get the birth date behind the scenes. This likely means that
   # import_participant() will get called twice in most analysis pipelines, once
-  # explcitly by the user, and once implicitly in this function.
-  DOBs = import_participants() %>%
+  # explicitly by the user, and once implicitly in this function.
+  DOBs = import_participants(anon_id = FALSE, identifiers = TRUE) %>%
     dplyr::select(subject_id, birth_date)
 
   # join the sessions to the DOBs to calculate age at each session:
