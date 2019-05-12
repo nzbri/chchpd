@@ -4,11 +4,14 @@
 \alias{import_participants}
 \title{Import participant demographics}
 \usage{
-import_participants(anon_id = TRUE, identifiers = FALSE)
+import_participants(anon_id = FALSE, identifiers = FALSE)
 }
 \arguments{
-\item{anon_id}{If \code{TRUE}, return the anonymous ID. Otherwise, return the
-in-house, non-secure ID.}
+\item{anon_id}{If \code{TRUE}, return an anonymised \code{subject_id}.
+Otherwise, return the in-house, non-secure ID.
+Currently, this option is not useful if other datasets are being imported,
+as they still contain the standard ID. We need to implement a global setting
+that dictates whether all functions return anonymised IDs.}
 
 \item{identifiers}{If \code{TRUE}, include identifying information (names,
 dates of birth & death, etc). This should not be used routinely for research.
@@ -22,7 +25,7 @@ A dataframe containing the participant data.
 }
 \description{
 \code{import_participants} Access the participant information that should be
-constant across all sessions (for example, date of birth, sex, etc).
+constant across all sessions (for example, age at diagnosis, sex, etc).
 }
 \details{
 This information is exported periodically from the Alice database.

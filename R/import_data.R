@@ -40,12 +40,15 @@ google_authenticate <- function(use_server = TRUE) {
 #' Import participant demographics
 #'
 #' \code{import_participants} Access the participant information that should be
-#' constant across all sessions (for example, date of birth, sex, etc).
+#' constant across all sessions (for example, age at diagnosis, sex, etc).
 #'
 #' This information is exported periodically from the Alice database.
 #'
-#' @param anon_id If \code{TRUE}, return the anonymous ID. Otherwise, return the
-#' in-house, non-secure ID.
+#' @param anon_id If \code{TRUE}, return an anonymised \code{subject_id}.
+#' Otherwise, return the in-house, non-secure ID.
+#' Currently, this option is not useful if other datasets are being imported,
+#' as they still contain the standard ID. We need to implement a global setting
+#' that dictates whether all functions return anonymised IDs.
 #'
 #' @param identifiers If \code{TRUE}, include identifying information (names,
 #' dates of birth & death, etc). This should not be used routinely for research.
@@ -61,7 +64,7 @@ google_authenticate <- function(use_server = TRUE) {
 #' participants = import_participants()
 #' }
 #' @export
-import_participants <- function(anon_id = TRUE, identifiers = FALSE) {
+import_participants <- function(anon_id = FALSE, identifiers = FALSE) {
 
   # import a file that is regularly exported via a cron job
   # from the Alice database:
@@ -95,14 +98,19 @@ import_participants <- function(anon_id = TRUE, identifiers = FALSE) {
     dplyr::mutate(age_today =
                     round(difftime(lubridate::today(), birth_date,
                                    units = 'days')/365.25,
+                          digits = 1)) %>%
+    dplyr::mutate(age_at_death =
+                    round(difftime(date_of_death, birth_date,
+                                   units = 'days')/365.25,
                           digits = 1))
 
   if (anon_id) { # return only anonymous id and no identifiers:
     participants %<>%
-      dplyr::select(anon_id, dead, participant_status, age_today,
+      dplyr::select(anon_id, dead, participant_status,
                     excluded_from_followup, participant_group, sex,
                     side_of_onset, handedness, symptom_onset_age, diagnosis_age,
-                    education, ethnicity)
+                    age_at_death, age_today, education, ethnicity) %>%
+      dplyr::rename(subject_id = anon_id)
   }
   else if (identifiers) { # for management purposes only, return names, DOB, etc
     participants %<>%
@@ -114,18 +122,14 @@ import_participants <- function(anon_id = TRUE, identifiers = FALSE) {
   }
   else { # return internal id code but no other identifiers:
     participants %<>%
-      dplyr::select(subject_id, survey_id, dead, participant_status, age_today,
-                    excluded_from_followup, participant_group, sex,
-                    side_of_onset, handedness, symptom_onset_age, diagnosis_age,
+      dplyr::select(subject_id, survey_id, dead, participant_status,
+                    excluded_from_followup,
+                    participant_group, sex, side_of_onset, handedness,
+                    symptom_onset_age, diagnosis_age, age_at_death, age_today,
                     education, ethnicity)
   }
 
-  if (anon_id) {
-    tabulate_duplicates(participants, 'anon_id')
-  } else {
-    tabulate_duplicates(participants, 'subject_id')
-  }
-
+  tabulate_duplicates(participants, 'subject_id')
 
   return(participants)
 }
@@ -630,9 +634,9 @@ import_neuropsyc <- function(concise = TRUE) {
   }
 
   np %<>%
+    janitor::clean_names() %>% # remove spaces from variable names, etc
     # remove empty rows:
     dplyr::filter(subject_id != '') %>%
-    janitor::clean_names() %>% # remove spaces from variable names, etc
     # tidy up errors in subject ids and session suffixes in source data:
     map_to_universal_session_id(remove_double_measures = TRUE)
 
