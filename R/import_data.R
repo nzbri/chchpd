@@ -140,7 +140,7 @@ import_participants <- function(anon_id = FALSE, identifiers = FALSE) {
 #' (possibly multiple) studies of which it is a part, and the group within that
 #' study to which the associated participant belongs.
 #'
-#' This information is exported priodically from the Alice database.
+#' This information is exported periodically from the Alice database.
 #'
 #' @param from_study Optionally specify the name of a specific study to limit
 #'   the records returned to just those from that study. Inspect the sessions
