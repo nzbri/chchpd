@@ -290,7 +290,7 @@ import_motor_scores <- function() {
 #' full_mds_updrs = import_MDS_UPDRS(concise = FALSE)
 #' }
 #' @export
-import_MDS_UPDRS <- function(concise = TRUE) {
+import_MDS_UPDRS <- function(concise = TRUE,raw_export=FALSE) {
   # get a handle to the clinical spreadsheet:
   clinical_ss = googlesheets::gs_title(chchpd_env$clinical_filename)
 
@@ -611,6 +611,8 @@ import_medications <- function(concise = TRUE) {
 #' @param concise If \code{TRUE}, return only the selected variables (e.g. MoCA,
 #'   global z, domain z). If \code{FALSE}, also return all individual test
 #'   scores, allowing more detailed analyses.
+#'   
+#' @param exclude If \code{TRUE}, don't return assessments that have been excluded
 #'
 #' @return A dataframe containing medication doses.
 #'
@@ -619,7 +621,7 @@ import_medications <- function(concise = TRUE) {
 #' np = import_neuropsyc()
 #' }
 #' @export
-import_neuropsyc <- function(concise = TRUE) {
+import_neuropsyc <- function(concise = TRUE, exclude = TRUE) {
   # get a handle to the neuropsyc spreadsheet:
   neuropsyc_ss = googlesheets::gs_title(chchpd_env$neuropsyc_filename)
 
@@ -646,8 +648,11 @@ import_neuropsyc <- function(concise = TRUE) {
     tidyr::separate(col = session_id, into = c('subject_id', 'session_date'),
                     sep = '_', remove = FALSE)
 
-  np %<>%
-    dplyr::filter(excluded_y_n != 'Y')
+  # remove excluded assessments
+  if (exclude == TRUE) {
+    np %<>%
+      dplyr::filter(excluded_y_n != 'Y')
+  }  
 
   # drop variables to make the data easier to manage:
   if (concise == TRUE) { # return only summary measures
@@ -661,7 +666,7 @@ import_neuropsyc <- function(concise = TRUE) {
     } else { # return most columns, for more detailed analysis
       np %<>%
         dplyr::select(subject_id, session_id, excluded_y_n, session_date,
-                      full_or_short_assessment, checked, pd_control,
+                      full_or_short_assessment, checked, pd_control, timeline,
                       nzbri_criteria, mo_ca,
                       wtar_predicted_wais_iii_fsiq,
                       adas_cog_70:version) # most indic tests are here
@@ -866,6 +871,12 @@ import_bloods <- function() {
 #' hallucinations and delusions, usinf the sacle developed by Prof. Simon Lewis'
 #' team in Sydney.
 #'
+#' @param export_type If \code{'simple'} (default), return data with all missing 
+#' data types collapsed to a single 'NA'. If equal to \code{'raw'}, export the raw 
+#' data with original missing data codes. If \code{'imputed'} return 
+#' a multiple imputation dataset where where missing values have been imputed 
+#' (to be implemented, will currently return same as simple).
+#'
 #' @return A dataframe containing the hallucination data.
 #'
 #' @examples
@@ -873,15 +884,26 @@ import_bloods <- function() {
 #' hallucinations = import_hallucinations()
 #' }
 #' @export
-import_hallucinations <- function() {
+import_hallucinations <- function(export_type='simple') {
   # get a handle to the clinical spreadsheet:
   clinical_ss = googlesheets::gs_title(chchpd_env$clinical_filename)
-
+  
+  # Change how we handle NAs and columns depending on export type
+  if (export_type == 'raw') {
+    na = character()
+    col_types = readr::cols(.default = "c")
+  }
+  else {
+    na = c('na', 'NA', 'NA1', 'NA2', 'NA3', 'NA4',
+           'NA5', 'NA6', 'UR', 'N/A')
+    col_types = NULL
+  }
+  
   hallucinations =
     googlesheets::gs_read(ss = clinical_ss,
                           ws = 'Hallucinations Questionnaire',
-                          na = c('na', 'NA', 'NA1', 'NA2', 'NA3', 'NA4',
-                                 'NA5', 'NA6', 'UR'),
+                          na = na,
+                          col_types=col_types,
                           # this sheet has a row above the column names:
                           skip = 1) %>%
     janitor::clean_names() %>% # remove spaces from variable names, etc
