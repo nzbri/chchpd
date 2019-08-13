@@ -140,7 +140,7 @@ import_participants <- function(anon_id = FALSE, identifiers = FALSE) {
 #' (possibly multiple) studies of which it is a part, and the group within that
 #' study to which the associated participant belongs.
 #'
-#' This information is exported priodically from the Alice database.
+#' This information is exported periodically from the Alice database.
 #'
 #' @param from_study Optionally specify the name of a specific study to limit
 #'   the records returned to just those from that study. Inspect the sessions
@@ -183,8 +183,9 @@ import_sessions <- function(from_study = NULL, exclude = TRUE) {
     sessions %<>% dplyr::filter(is.na(study_excluded) | study_excluded != TRUE)
   }
 
-  if (assertthat::is.string(from_study)) {
-    sessions %<>% dplyr::filter(study == from_study)
+  # Updated to filter multiple studies at once. 12-07-2019
+  if (assertthat::not_empty(from_study) && all(sapply(from_study, assertthat::is.string))) {
+    sessions %<>% dplyr::filter(study %in% from_study)
   }
 
   # need to calculate the age at each session. To do this, we require the birth
