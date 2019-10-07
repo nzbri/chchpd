@@ -9,8 +9,10 @@ import_sessions(from_study = NULL, exclude = TRUE)
 \arguments{
 \item{from_study}{Optionally specify the name of a specific study to limit
 the records returned to just those from that study. Inspect the sessions
-spreadsheet to see the valid opions. e.g. \code{'PET'} or
-\code{'Follow-up'} for the Progression study.}
+spreadsheet to see the valid options. e.g. \code{'PET'} or
+\code{'Follow-up'} for the Progression study. Can also specify a list to
+include sessions from multiple studies, e.g.
+\code{c('Follow-up', 'PD DNA')}.}
 
 \item{exclude}{If \code{TRUE}, don't return sessions that have been excluded
 from a given study.}
@@ -24,7 +26,7 @@ A dataframe containing the session-group-study data.
 study to which the associated participant belongs.
 }
 \details{
-This information is exported priodically from the Alice database.
+This information is exported periodically from the Alice database.
 }
 \examples{
 \dontrun{

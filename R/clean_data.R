@@ -71,7 +71,8 @@ map_to_universal_session_id <- function(dataset,
   # produce error output if there is at least 1 non-match:
   if (nrow(unmatched) > 0 ) {
     print('Records failed to match to a universal session ID:')
-    print(knitr::kable(unmatched[1:4]))
+    # print up to the first 4 columns of the dataframe, unless there are fewer:
+    print(knitr::kable(unmatched[1:min(4, ncol(unmatched))]))
   }
 
   # some people got multiple assessments of some measures per overall session

@@ -36,28 +36,15 @@ NULL # needed just so that roxygen will process the statements above.
 }
 
 
-# Create a local environment to keep filenames. Better than using the global environment
-# which would be affected by rm() function.
+# Create a local environment to keep filenames. Better than using the global
+# environment which would be affected by rm() function.
 chchpd_env = new.env(emptyenv())
 chchpd_env$clinical_filename = 'PD Progression clinical data'
 chchpd_env$neuropsyc_filename = 'All Z-scores Progression'
+chchpd_env$redcap_neuropsyc_filename = 'RedcapExport'
 chchpd_env$scan_filename = 'PD Scan numbers'
 chchpd_env$participant_filename = 'ParticipantExport'
 chchpd_env$session_filename = 'SessionExport'
 chchpd_env$subj_session_map_filename = 'SubjectSessionMapping'
 chchpd_env$bloods_filename = 'PD Bloods Tracking'
 
-# .onLoad <- function(libname, pkgname){
-#   # make an environment to hold variables all functions need to know about:
-#   assign('chchpd_env', value = new.env(), envir = globalenv())
-# 
-#   # Need titles of the relevant Google sheets. Just simple strings at this
-#   # stage. Handles to the files come later, via googlesheets::gs_title()
-#   chchpd_env$clinical_filename = 'PD Progression clinical data'
-#   chchpd_env$neuropsyc_filename = 'All Z-scores Progression'
-#   chchpd_env$scan_filename = 'PD Scan numbers'
-#   chchpd_env$participant_filename = 'ParticipantExport'
-#   chchpd_env$session_filename = 'SessionExport'
-#   chchpd_env$subj_session_map_filename = 'SubjectSessionMapping'
-#   chchpd_env$bloods_filename = 'PD Bloods Tracking'
-# }
