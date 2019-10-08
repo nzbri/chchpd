@@ -7,3 +7,7 @@
 
 # HOWTO
 
+## Tag a release:
+git tag -a v0.2.1 -m "Some description of the release"
+git push --follow-tags
+

@@ -23,31 +23,44 @@ Please direct queries to Michael in the first instance.
 ## Installation
 
 This package is only of interest and utility internally at NZBRI and
-hence can’t be made available via CRAN. Therefore, the usual
-installation route using `install.packages('chchpd')` is not possible,
-and will yield a not-useful error message that the package is not
-available for your version of R. Instead, install `chchpd` from its
-development repository on Github as follows:
+hence can’t be made available via CRAN. Instead, it is hosted in an
+online repository on Github at <https://github.com/nzbri/chchpd>.
+
+Therefore, the usual installation route using
+`install.packages('chchpd')` is not possible, and will yield a
+not-useful error message that the package is not available for your
+version of R. Instead, install `chchpd` from its development repository
+on Github as follows:
 
 ``` r
 # install.packages('devtools')
 devtools::install_github('nzbri/chchpd')
 ```
 
-If `install_github()` is invoked subsequently, the package will be
-downloaded and installed only if the version on Github is newer than the
-one installed locally.
+If `install_github('nzbri/chchpd')` is invoked subsequently, the package
+will be downloaded and installed only if the version on Github is newer
+than the one installed locally.
 
-You can view the repository at <https://github.com/nzbri/chchpd>. Please
-use the issue tracker at <https://github.com/nzbri/chchpd/issues> to
-report any problems. Bear in mind that this repository is public to the
-world, so if reporting data-related issues, be careful not to post
+If problems arise in a new release, you can downgrade to a previous
+version by specifying the name of a particular release to revert to,
+e.g.
+
+``` r
+devtools::install_github('nzbri/chchpd@v0.1.5')
+```
+
+The list of release names is here:
+<https://github.com/nzbri/chchpd/releases>
+
+Please use the issue tracker at <https://github.com/nzbri/chchpd/issues>
+to report any problems. Bear in mind that this repository is public to
+the world, so if reporting data-related issues, be careful not to post
 anything that contains identifiers.
 
 ## Example
 
 Records across the various tables must be joined using either
-`subject_id` as an index (e.g. for linking to the participant table, as
+`subject_id` as an index (e.g. for linking to the participant table, as
 it includes information, such as sex, that is constant for a subject),
 or `session_id` (to join various measures gathered at approximately the
 same assessment session for a given participant, and which might change
@@ -61,12 +74,12 @@ the follow-up session two years after baseline recruitment session in
 the Progression study. But the same session might also have served as
 the baseline in the more selective PET study, and been labelled, say,
 `999BIO_PET0`. This often idiosyncratic labelling is cured by the
-subject session mapping table, which would have a record for both the
+subject session maping table, which would have a record for both the
 `999BIO_F2` and `999BIO_PET0` sessions, linking them to the same
 standardised session code, which has a form like `999BIO_2016-0-28`.
 When importing various data sources (like HADS or UPDRS), their
-idiosyncratic session labels are replaced by this standardised form. Thus
-it is easy to join multiple tables together systematically, as below.
+idosyncratic session labels are replaced by this standardised form. Thus
+it is easy to join multiple tables togther systematically, as below.
 Often a key step is to specify just a restricted set of sessions, by
 specifying a particular study to filter them by. In the example code
 below, we select just those sessions in the ‘PET’ study.
