@@ -175,8 +175,6 @@ import_sessions <- function(from_study = NULL, exclude = TRUE) {
                   session_date = date) %>%
     dplyr::mutate(study = factor(study),
                   session_date = lubridate::ymd(session_date)) %>%
-    # filter out scheduled future visits:
-    #filter(session_date < lubridate::today()) %>%
     # tidy up errors in subject ids and session suffixes in source data:
     map_to_universal_session_id(make_session_label = FALSE,
                                 remove_double_measures = FALSE)
