@@ -635,30 +635,12 @@ import_neuropsyc <- function(concise = TRUE) {
   np %<>%
     janitor::clean_names() # remove spaces from variable names, etc
 
-  # drop variables to make the data easier to manage:
-  if (concise == TRUE) { # return only summary measures
-    np %<>%
-      dplyr::select(subject_id, session_id, np1_date,
-                    session_type,
-                    group, nzbri_criteria, moca, wtar_wais_3_fsiq,
-                    global_z, npi, attention_mean,
-                    executive_mean, visuo_mean, memory_mean,
-                    language_mean)
-  } else { # return most columns, for more detailed analysis
-    np %<>%
-      dplyr::select(subject_id, session_id, np1_date,
-                    session_type,
-                    group, nzbri_criteria, moca,
-                    wtar_wais_3_fsiq,
-                    dplyr::everything()) %>%
-      dplyr::select(-session_labels, -sex, -age, -education, -diagnosis)
-  }
-
   np %<>% # name selected variables neatly
     dplyr::rename(session_date = np1_date,
                   np_group = group,
                   full_assessment = session_type,
                   cognitive_status = nzbri_criteria,
+                  global_z_no_language = global_z_historical,
                   MoCA = moca,
                   WTAR = wtar_wais_3_fsiq,
                   attention_domain = attention_mean,
@@ -675,9 +657,13 @@ import_neuropsyc <- function(concise = TRUE) {
                                 levels = c('U', 'MCI', 'PDD'),
                                 labels = c('N', 'MCI', 'D'),
                                 ordered = TRUE),
-      # make the 'short assessment' column boolean:
+      # make some columns boolean:
       full_assessment =
-        dplyr::if_else(full_assessment == 'Short', FALSE, TRUE, TRUE))
+        dplyr::if_else(full_assessment == 'Short', FALSE, TRUE, TRUE),
+      np_excluded =
+        dplyr::case_when(neuropsych_excluded == 'Y' ~ TRUE,
+                         neuropsych_excluded == 'N' ~ FALSE,
+                         TRUE ~ NA))
 
   # make a single diagnosis column
   np %<>%
@@ -714,6 +700,25 @@ import_neuropsyc <- function(concise = TRUE) {
                   FU_latest = max(years_from_baseline)) %>%
     dplyr::ungroup() %>% # leaving it grouped can cause issues later
     dplyr::select(-subject_id, -session_date)
+
+  # drop variables to make the data easier to manage:
+  if (concise == TRUE) { # return only summary measures
+    np %<>%
+      dplyr::select(session_id, np_excluded,
+                    full_assessment, diagnosis, np_group, cognitive_status,
+                    MoCA, WTAR, global_z, global_z_no_language, npi,
+                    attention_domain,executive_domain, visuo_domain,
+                    learning_memory_domain, language_domain, date_baseline,
+                    global_z_baseline, diagnosis_baseline, session_number,
+                    years_from_baseline, FU_latest)
+  } else { # return most columns, for more detailed analysis
+    np %<>%
+      dplyr::select(session_id, np_excluded,
+                    full_assessment, np_group, cognitive_status, MoCA,
+                    WTAR,
+                    dplyr::everything()) %>%
+      dplyr::select(-session_labels, -sex, -age, -education)
+  }
 
   return(np)
 }
