@@ -71,7 +71,7 @@ The ‘glue’ between participants and the data gathered about them is the
 assessment sessions they have had. In the data, these sessions were
 often described by idiosyncratic labels, such as `999BIO_F2` (indicating
 the follow-up session two years after baseline recruitment session in
-the Progression study. But the same session might also have served as
+the Progression study). But the same session might also have served as
 the baseline in the more selective PET study, and been labelled, say,
 `999BIO_PET0`. This often idiosyncratic labelling is cured by the
 subject session maping table, which would have a record for both the
