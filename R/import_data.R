@@ -654,7 +654,7 @@ import_neuropsyc <- function(concise = TRUE) {
     # label some factors neatly:
     dplyr::mutate(
       cognitive_status = factor(cognitive_status,
-                                levels = c('U', 'MCI', 'PDD'),
+                                levels = c('U', 'MCI', 'D'),
                                 labels = c('N', 'MCI', 'D'),
                                 ordered = TRUE),
       # make some columns boolean:
@@ -664,25 +664,6 @@ import_neuropsyc <- function(concise = TRUE) {
         dplyr::case_when(neuropsych_excluded == 'Y' ~ TRUE,
                          neuropsych_excluded == 'N' ~ FALSE,
                          TRUE ~ NA))
-
-  # make a single diagnosis column
-  np %<>%
-    tidyr::unite(col = diagnosis,
-                 np_group, cognitive_status, remove = FALSE) %>%
-    dplyr::mutate(diagnosis =
-                    factor(diagnosis, levels =
-                             c('Control_N',  'Control_MCI', 'Control_D',
-                               'Control_NA',
-                               'PD_N', 'PD_MCI', 'PD_D', 'PD_NA',
-                               'MSA_N', 'MSA_MCI', 'MSA_D', 'MSA_NA',
-                               'PSP_N', 'PSP_MCI', 'PSP_D', 'PSP_NA'),
-                           labels =
-                             c('Control',  'Control-MCI', 'Control-D',
-                               'Control unknown',
-                               'PD-N', 'PD-MCI', 'PDD', 'PD unknown',
-                               'MSA-N', 'MSA-MCI', 'MSA-D', 'MSA unknown',
-                               'PSP-N', 'PSP-MCI', 'PSP-D', 'PSP unknown'))) %>%
-    droplevels()
 
   np %<>%
     dplyr::arrange(subject_id, session_date) %>%
