@@ -27,15 +27,6 @@ NULL # needed just so that roxygen will process the statements above.
 "_PACKAGE"
 #> [1] "_PACKAGE"
 
-# functions that run when package is attached/loaded:
-.onAttach <- function(libname, pkgname) {
-  packageStartupMessage(paste0("Data import functions for the Christchurch ",
-                               "Longitudinal Parkinson's Study. Should be run ",
-                               "only by accredited researchers at NZBRI, who ",
-                               "have authorised access to the data sources."))
-}
-
-
 # Create a local environment to keep filenames. Better than using the global
 # environment which would be affected by rm() function.
 chchpd_env = new.env(emptyenv())
@@ -47,4 +38,25 @@ chchpd_env$participant_filename = 'ParticipantExport'
 chchpd_env$session_filename = 'SessionExport'
 chchpd_env$subj_session_map_filename = 'SubjectSessionMapping'
 chchpd_env$bloods_filename = 'PD Bloods Tracking'
+chchpd_env$default_recache_time = 60 # minutes to use cache data, instead of downloading again.
+chchpd_env$cached = list()
 
+# functions that run when package is attached/loaded:
+.onAttach <- function(libname, pkgname) {
+  packageStartupMessage(paste0("Data import functions for the Christchurch ",
+                               "Longitudinal Parkinson's Study. Should be run ",
+                               "only by accredited researchers at NZBRI, who ",
+                               "have authorised access to the data sources."))
+  
+  
+  if (is.null(getOption('chchpd_use_cached', default = NULL)))
+    options(chchpd_use_cached = TRUE)
+
+  
+  if (is.null(getOption('chchpd_cache_update_time', default = NULL)))
+    options(chchpd_cache_update_time = chchpd_env$default_recache_time) # 60 minutes
+  
+  if (is.null(getOption('chchpd_supress_warnings', default = NULL)))
+    options(chchpd_supress_warnings = TRUE) # Reduce warnings from googlesheets.
+  
+}
