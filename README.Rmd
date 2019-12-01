@@ -32,20 +32,31 @@ Michael in the first instance.
 ## Installation
 
 This package is only of interest and utility internally at NZBRI and hence can't 
- be made available via CRAN. Therefore, the usual installation route using 
- `install.packages('chchpd')` is not possible, and will yield a not-useful error
- message that the package is not available for your version of R. Instead, 
- install `chchpd` from its development repository on Github as follows:
+ be made available via CRAN. Instead, it is hosted in an online repository on 
+ Github at https://github.com/nzbri/chchpd.
+ 
+ Therefore, the usual installation route using `install.packages('chchpd')` is 
+ not possible, and will yield a not-useful error message that the package is not
+ available for your version of R. Instead, install `chchpd` from its development
+ repository on Github as follows:
 
 ```{r gh-installation, eval = FALSE}
 # install.packages('devtools')
 devtools::install_github('nzbri/chchpd')
 ```
-If `install_github()` is invoked subsequently, the package will be downloaded 
-and installed only if the version on Github is newer than the one installed 
-locally.
+If `install_github('nzbri/chchpd')` is invoked subsequently, the package will be
+downloaded and installed only if the version on Github is newer than the one 
+installed locally.
 
-You can view the repository at https://github.com/nzbri/chchpd. 
+If problems arise in a new release, you can downgrade to a previous version by 
+specifying the name of a particular release to revert to, e.g.
+
+```{r gh-revert, eval = FALSE}
+devtools::install_github('nzbri/chchpd@v0.1.5')
+```
+
+The list of release names is here: https://github.com/nzbri/chchpd/releases
+
 Please use the issue tracker at https://github.com/nzbri/chchpd/issues to report 
 any problems. Bear in mind that this repository is public to the world, so if 
 reporting data-related issues, be careful not to post anything that contains 
@@ -63,7 +74,7 @@ The 'glue' between participants and the data gathered about them is the
 'sessions' table. For each participant, this lists the various assessment 
 sessions they have had. In the data, these sessions were often described by 
 idiosyncratic labels, such as `999BIO_F2` (indicating the follow-up session two 
-years after baseline recruitment session in the Progression study. But the same 
+years after baseline recruitment session in the Progression study). But the same 
 session might also have served as the baseline in the more selective PET study, 
 and been labelled, say, `999BIO_PET0`. This often idiosyncratic labelling is 
 cured by the subject session maping table, which would have a record for both 

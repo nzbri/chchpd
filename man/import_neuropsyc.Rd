@@ -7,16 +7,16 @@
 import_neuropsyc(concise = TRUE)
 }
 \arguments{
-\item{concise}{If \code{TRUE}, return only the selected variables (e.g. MoCA,
+\item{concise}{If \code{TRUE}, return only selected variables (e.g. MoCA,
 global z, domain z). If \code{FALSE}, also return all individual test
 scores, allowing more detailed analyses.}
 }
 \value{
-A dataframe containing medication doses.
+A dataframe containing neuropsyc scores.
 }
 \description{
 \code{import_neuropsyc} Return various test results from the neuropsyc
-spreadsheet.
+data, as periodically exported from the REDCap database.
 }
 \examples{
 \dontrun{

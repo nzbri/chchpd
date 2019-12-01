@@ -144,8 +144,10 @@ import_participants <- function(anon_id = FALSE, identifiers = FALSE) {
 #'
 #' @param from_study Optionally specify the name of a specific study to limit
 #'   the records returned to just those from that study. Inspect the sessions
-#'   spreadsheet to see the valid opions. e.g. \code{'PET'} or
-#'   \code{'Follow-up'} for the Progression study.
+#'   spreadsheet to see the valid options. e.g. \code{'PET'} or
+#'   \code{'Follow-up'} for the Progression study. Can also specify a list to
+#'   include sessions from multiple studies, e.g.
+#'   \code{c('Follow-up', 'PD DNA')}.
 #'
 #' @param exclude If \code{TRUE}, don't return sessions that have been excluded
 #'   from a given study.
@@ -173,8 +175,6 @@ import_sessions <- function(from_study = NULL, exclude = TRUE) {
                   session_date = date) %>%
     dplyr::mutate(study = factor(study),
                   session_date = lubridate::ymd(session_date)) %>%
-    # filter out scheduled future visits:
-    #filter(session_date < lubridate::today()) %>%
     # tidy up errors in subject ids and session suffixes in source data:
     map_to_universal_session_id(make_session_label = FALSE,
                                 remove_double_measures = FALSE)
@@ -183,7 +183,7 @@ import_sessions <- function(from_study = NULL, exclude = TRUE) {
     sessions %<>% dplyr::filter(is.na(study_excluded) | study_excluded != TRUE)
   }
 
-  # Updated to filter multiple studies at once. 12-07-2019
+  # Updated to filter multiple studies at once.
   if (assertthat::not_empty(from_study) && all(sapply(from_study, assertthat::is.string))) {
     sessions %<>% dplyr::filter(study %in% from_study)
   }
@@ -607,15 +607,15 @@ import_medications <- function(concise = TRUE) {
 #' Import neuropsyc data.
 #'
 #' \code{import_neuropsyc} Return various test results from the neuropsyc
-#' spreadsheet.
+#' data, as periodically exported from the REDCap database.
 #'
-#' @param concise If \code{TRUE}, return only the selected variables (e.g. MoCA,
+#' @param concise If \code{TRUE}, return only selected variables (e.g. MoCA,
 #'   global z, domain z). If \code{FALSE}, also return all individual test
 #'   scores, allowing more detailed analyses.
 #'   
 #' @param exclude If \code{TRUE}, don't return assessments that have been excluded
 #'
-#' @return A dataframe containing medication doses.
+#' @return A dataframe containing neuropsyc scores.
 #'
 #' @examples
 #' \dontrun{
@@ -623,6 +623,108 @@ import_medications <- function(concise = TRUE) {
 #' }
 #' @export
 import_neuropsyc <- function(concise = TRUE, exclude = TRUE) {
+  # get a handle to the neuropsyc spreadsheet:
+  neuropsyc_ss = googlesheets::gs_title(chchpd_env$redcap_neuropsyc_filename)
+
+  np = googlesheets::gs_read(ss = neuropsyc_ss,
+                             na = 'NA')
+
+  # report errors where cell contents don't match expected type for the column:
+  if (nrow(readr::problems(np)) > 0) {
+    print(readr::problems(np))
+  }
+
+  np %<>%
+    janitor::clean_names() # remove spaces from variable names, etc
+
+  np %<>% # name selected variables neatly
+    dplyr::rename(session_date = np1_date,
+                  np_group = group,
+                  full_assessment = session_type,
+                  cognitive_status = nzbri_criteria,
+                  global_z_no_language = global_z_historical,
+                  MoCA = moca,
+                  WTAR = wtar_wais_3_fsiq,
+                  attention_domain = attention_mean,
+                  executive_domain = executive_mean,
+                  visuo_domain = visuo_mean,
+                  learning_memory_domain = memory_mean,
+                  language_domain = language_mean)
+
+  # do some tidying:
+  np %<>%
+    # label some factors neatly:
+    dplyr::mutate(
+      cognitive_status = factor(cognitive_status,
+                                levels = c('U', 'MCI', 'D'),
+                                labels = c('N', 'MCI', 'D'),
+                                ordered = TRUE),
+      # make some columns boolean:
+      full_assessment =
+        dplyr::if_else(full_assessment == 'Short', FALSE, TRUE, TRUE),
+      np_excluded =
+        dplyr::case_when(neuropsych_excluded == 'Y' ~ TRUE,
+                         neuropsych_excluded == 'N' ~ FALSE,
+                         TRUE ~ NA))
+
+  np %<>%
+    dplyr::arrange(subject_id, session_date) %>%
+    dplyr::group_by(subject_id) %>% # within each subject
+    # get the baseline values of some variables:
+    dplyr::mutate(date_baseline = dplyr::first(session_date),
+                  global_z_baseline = dplyr::first(global_z),
+                  diagnosis_baseline = dplyr::first(diagnosis),
+                  session_number = dplyr::row_number(),
+                  years_from_baseline =
+                    as.numeric(round(difftime(session_date, date_baseline,
+                                              units = 'days')/365.25,
+                                     digits = 2)),
+                  # Find longest follow-up time:
+                  FU_latest = max(years_from_baseline)) %>%
+    dplyr::ungroup() %>% # leaving it grouped can cause issues later
+    dplyr::select(-subject_id, -session_date)
+
+  # drop variables to make the data easier to manage:
+  if (concise == TRUE) { # return only summary measures
+    np %<>%
+      dplyr::select(session_id, np_excluded,
+                    full_assessment, diagnosis, np_group, cognitive_status,
+                    MoCA, WTAR, global_z, global_z_no_language, npi,
+                    attention_domain,executive_domain, visuo_domain,
+                    learning_memory_domain, language_domain, date_baseline,
+                    global_z_baseline, diagnosis_baseline, session_number,
+                    years_from_baseline, FU_latest)
+  } else { # return most columns, for more detailed analysis
+    np %<>%
+      dplyr::select(session_id, np_excluded,
+                    full_assessment, np_group, cognitive_status, MoCA,
+                    WTAR,
+                    dplyr::everything()) %>%
+      dplyr::select(-session_labels, -sex, -age, -education)
+  }
+
+  return(np)
+}
+
+#' Import (old) neuropsyc data.
+#'
+#' \code{import_neuropsyc} Return various test results from the OLD neuropsyc
+#' spreadsheet. This should no longer be used, as it refers only to an outdated
+#' data source. The new \code{import_neuropsyc()} function imports data from a
+#' sheet which is regularly exported from the REDCap database.
+#'
+#' @param concise If \code{TRUE}, return only the selected variables (e.g. MoCA,
+#'   global z, domain z). If \code{FALSE}, also return all individual test
+#'   scores, allowing more detailed analyses.
+#'
+#' @return A dataframe containing neuropsyc scores.
+#'
+#' @examples
+#' \dontrun{
+#' np = import_neuropsyc()
+#' }
+#' @export
+DEPRECATED_import_neuropsyc <- function(concise = TRUE) {
   # get a handle to the neuropsyc spreadsheet:
   neuropsyc_ss = googlesheets::gs_title(chchpd_env$neuropsyc_filename)
 
@@ -775,7 +877,7 @@ import_MRI <- function(exclude = TRUE) {
   if (exclude) {
     MRI %<>%
       dplyr::filter(is.na(mri_excluded) | mri_excluded == 'Included') %>%
-      dplyr::select(-mri_excluded)
+      dplyr::select(-mri_excluded, -study)
   }
 
   return(MRI %>% map_to_universal_session_id())
