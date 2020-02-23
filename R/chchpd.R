@@ -42,7 +42,7 @@ chchpd_env$session_file_id = # SessionExport spreadsheet:
 chchpd_env$clinical_file_id = # PD Progression clinical data spreadsheet:
   '14Jb3qC1Ioazmpacpwtlqw-myFtIjBGR9D2y6znLVIbs' # temp copy for testing
 #'1kcPVaCGjpHVXKfCoLkIaGPa624RiJL47q1KxmA3QWdo' # original corrupted one
-#'
+
 chchpd_env$redcap_neuropsyc_file_id = # RedcapExport spreadsheet:
   '1liI06efJe1mRI3Iz2lWwq_PeZDpZLnIhhjqyN1SQlX0'
 
@@ -71,8 +71,8 @@ chchpd_env$cached_time = list() # store time when each data set is downloaded
   if (is.null(getOption('chchpd_use_cached', default = NULL)))
     options(chchpd_use_cached = TRUE)
 
-  if (is.null(getOption('chchpd_cache_update_time', default = NULL)))
-    options(chchpd_cache_update_time = chchpd_env$default_recache_time) # 60 min
+  if (is.null(getOption('chchpd_cache_duration', default = NULL)))
+    options(chchpd_cache_duration = chchpd_env$default_recache_time) # 60 min
 
   if (is.null(getOption('chchpd_suppress_warnings', default = NULL)))
     options(chchpd_suppress_warnings = TRUE) # Reduce warnings from googlesheets
