@@ -58,7 +58,7 @@ chchpd_env$bloods_file_id = # PD Bloods Tracking spreadsheet:
 # as data imports are slow, allow them to be automatically cached for a period:
 chchpd_env$default_recache_time = 60 # minutes
 chchpd_env$cached_data = list() # store imported dataframes here by name
-chchpd_env$cache_start = list() # store time when each data set is downloaded
+chchpd_env$cached_time = list() # store time when each data set is downloaded
 
 # functions that run when package is attached/loaded:
 .onAttach <- function(libname, pkgname) {
@@ -75,6 +75,6 @@ chchpd_env$cache_start = list() # store time when each data set is downloaded
     options(chchpd_cache_update_time = chchpd_env$default_recache_time) # 60 min
 
   if (is.null(getOption('chchpd_suppress_warnings', default = NULL)))
-    options(chchpd_supress_warnings = TRUE) # Reduce warnings from googlesheets
+    options(chchpd_suppress_warnings = TRUE) # Reduce warnings from googlesheets
 
 }

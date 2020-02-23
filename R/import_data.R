@@ -1,125 +1,125 @@
 get_cache_opts = function() {
   use_cached = getOption('chchpd_use_cached', default = TRUE)
-  cache_time = getOption('chchpd_cache_update_time', default = chchpd_env$default_recache_time)
-  return(list(use_cached = use_cached, cache_time = cache_time))
+  cache_duration = getOption('chchpd_cache_update_time',
+                         default = chchpd_env$default_recache_time)
+  return(list(use_cached = use_cached, cache_duration = cache_duration))
 }
 
-import_helper_googlesheet = function(header) {
-  header = tolower(header)
-  if (header == 'session_code_map'){
-    data = googlesheets::gs_title(chchpd_env$subj_session_map_filename) %>%
+import_helper_googlesheet = function(dataset) {
+  dataset = tolower(dataset) # label of spreadsheet to import (e.g. HADS)
+
+  if (dataset == 'session_code_map'){
+    data = googlesheets::gs_title(chchpd_env$subj_session_map_file_id) %>%
       googlesheets::gs_read()
-  } else if (header == 'participants'){
-    data = googlesheets::gs_title(chchpd_env$participant_filename) %>%
-      googlesheets::gs_read(na = c('NA', 'None')) %>%
+  } else if (dataset == 'participants'){
+    data = googlesheets4::read_sheet(ss = chchpd_env$participant_file_id,
+                                     na = c('NA', 'None'),
+                                     col_types =
+                                       'ccccDncnnccccccccccnncccDccccc') %>%
       janitor::clean_names()
 
-  } else if (header == 'sessions') {
-    data = googlesheets::gs_title(chchpd_env$session_filename) %>%
-      googlesheets::gs_read() %>%
+  } else if (dataset == 'sessions') {
+    data = googlesheets4::read_sheet(ss = chchpd_env$session_file_id,
+                                     col_types = 'ccDnccccncccccDDDDDDDD') %>%
       janitor::clean_names()
 
-  } else if (header == 'mds_updrs') {
-    clinical_ss = googlesheets::gs_title(chchpd_env$clinical_filename)
+  } else if (dataset == 'mds_updrs') {
+    data = googlesheets4::read_sheet(ss = chchpd_env$clinical_file_id,
+                                     sheet = 'MDS_UPDRS',
+                                     na = c('na', 'NA', 'NA1', 'NA2', 'NA3',
+                                            'NA4', 'NA5', 'NA6', 'UR'),
+                                     col_types =
+                                       paste0('cccccDnnnnnnnnnnnnnn',
+                                              'nnnnnnnnnnnnnnnnnnnn',
+                                              'nnnnnnnnnnnnnnnnnnnn',
+                                              'nnnnnncccccccccccccc'))
 
-    data = googlesheets::gs_read(ss = clinical_ss,
-                                 ws = 'MDS_UPDRS',
-                                 na = c('na', 'NA', 'NA1', 'NA2', 'NA3',
-                                        'NA4', 'NA5', 'NA6', 'UR'))
+  } else if (dataset == 'old_updrs'){
+    data = googlesheets4::read_sheet(ss = chchpd_env$clinical_file_id,
+                                     sheet = 'Old_UPDRS',
+                                     na = c('na', 'NA', 'NA1', 'NA2', 'NA3',
+                                            'NA4', 'NA5', 'NA6', 'UR'),
+                                     col_types =
+                                       paste0('cccccDDniiiiiiiiiiii',
+                                              'iiiiiiiiiiiiiiiiiiii',
+                                              'iiiiiiiiiiiic'))
 
-  } else if (header == 'old_updrs'){
-    clinical_ss = googlesheets::gs_title(chchpd_env$clinical_filename)
-    data = googlesheets::gs_read(ss = clinical_ss,
-                                 ws = 'Old_UPDRS')
+  } else if (dataset == 'hads') {
+    clinical_ss = googlesheets::gs_title(chchpd_env$clinical_file_id)
 
-  } else if (header == 'hads') {
-    clinical_ss = googlesheets::gs_title(chchpd_env$clinical_filename)
+    data = googlesheets4::read_sheet(ss = chchpd_env$clinical_file_id,
+                                     sheet = 'HADS',
+                                     na = c('NA', 'NA1', 'NA2', 'NA3', 'NA4', 'NA5',
+                                            'NA6'),
+                                     col_types ='ccDiiiiiiiiiiiiiiiii') %>%
+      dplyr::select(-Anxiety_total, -Depression_total) # don't include the
+    # totals columns, as they don't deal well with missing values and we
+    # calculate them afresh anyway
 
-    data = googlesheets::gs_read(ss = clinical_ss,
-                                 ws = 'HADS',
-                                 col_types = readr::cols(subject_id =
-                                                           readr::col_character(),
-                                                         session_suffix =
-                                                           readr::col_character(),
-                                                         HADS_date = readr::col_date(),
-                                                         .default = readr::col_integer()),# the item scores
-                                 na = c('NA', 'NA1', 'NA2', 'NA3', 'NA4', 'NA5',
-                                        'NA6'),
-                                 range = googlesheets::cell_cols('A:Q')) # don't
-    # include the totals columns, as they don't deal well with missing values and
-    # we calculate them afresh below anyway.
+  } else if (dataset == 'meds') {
+    data = googlesheets4::read_sheet(ss = chchpd_env$clinical_file_id,
+                                     sheet = 'Medication',
+                                     na = c('NA', 'NA1', 'NA2', 'NA3', 'NA4',
+                                            'NA5', 'NA6'),
+                                     col_types =
+                                       'ccccDcnnnnnnnnnnnnnnnnnnnnnnncc')
 
-  } else if (header == 'meds') {
-    clinical_ss = googlesheets::gs_title(chchpd_env$clinical_filename)
-    data = googlesheets::gs_read(ss = clinical_ss,
-                                 ws = 'Medication',
-                                 na = c('NA', 'NA1', 'NA2', 'NA3', 'NA4',
-                                        'NA5', 'NA6'))
-  } else if (header == 'np') {
-    neuropsyc_ss = googlesheets::gs_title(chchpd_env$redcap_neuropsyc_filename)
-    data = googlesheets::gs_read(ss = neuropsyc_ss,
-                                 na = 'NA')
-  } else if (header == 'deprecated_np') {
-    neuropsyc_ss = googlesheets::gs_title(chchpd_env$neuropsyc_filename)
-
-    data = googlesheets::gs_read(ss = neuropsyc_ss,
-                                 ws = 'All Data',
-                                 na = c('na', 'NA', 'NA1', 'NA2', 'NA3', 'NA4',
-                                        'NA5', 'NA6', '#DIV/0!'))
-  } else if (header == 'mri') {
-    scan_ss = googlesheets::gs_title(chchpd_env$scan_filename)
-
-    data = googlesheets::gs_read(ss = scan_ss,
-                                 ws = 'MRI_scans')
-  } else if (header == 'pet') {
-    scan_ss = googlesheets::gs_title(chchpd_env$scan_filename)
-
-    data = googlesheets::gs_read(ss = scan_ss,
-                                 ws = 'PET_scans')
-  } else if (header == 'bloods') {
-    bloods_ss = googlesheets::gs_title(chchpd_env$bloods_filename)
-
-    data = googlesheets::gs_read(ss = bloods_ss,
-                                 ws = 'data',
-                                 col_types =
-                                   readr::cols(height_m = readr::col_number(),
-                                               weight_kg = readr::col_number(),
-                                               creatinine_umol_l = readr::col_number(),
-                                               urate_mmol_l = readr::col_number()))
-  } else if (header == 'hallucinations') {
-    clinical_ss = googlesheets::gs_title(chchpd_env$clinical_filename)
-
-    data = googlesheets::gs_read(ss = clinical_ss,
-                                 ws = 'Hallucinations Questionnaire',
-                                 na = c('na', 'NA', 'NA1', 'NA2', 'NA3', 'NA4',
-                                        'NA5', 'NA6', 'UR'),
-                                 # this sheet has a row above the column names:
-                                 skip = 1)
+  } else if (dataset == 'np') {
+    data = googlesheets4::read_sheet(ss = chchpd_env$redcap_neuropsyc_file_id,
+                                     na = 'NA',
+                                     col_types = paste0('ccccccDccnnccnn',
+                                                        'nnnnnnnnnnnnnnn',
+                                                        'nnnnnnnnnnnnnnn',
+                                                        'nnnnnnnnnnnnnnn'))
+  } else if (dataset == 'mri') {
+    data = ggooglesheets4::read_sheet(ss = chchpd_env$scan_file_id,
+                                      sheet = 'MRI_scans',
+                                      col_types = 'cccDccccccccccccccccccccc')
+  } else if (dataset == 'pet') {
+    data = googlesheets4::read_sheet(ss = chchpd_env$scan_file_id,
+                                     sheet = 'PET_scans',
+                                     col_types = 'ccDDcDccccccccccccccccc')
+  } else if (dataset == 'bloods') {
+    data = googlesheets4::read_sheet(ss = chchpd_env$bloods_file_id,
+                                     sheet = 'data',
+                                     col_types = 'cccDnnnncccc')
+  } else if (dataset == 'hallucinations') {
+    data = googlesheets4::read_sheet(ss = chchpd_env$clinical_file_id,
+                                     sheet = 'Hallucinations Questionnaire',
+                                     na = c('N/A', 'NA', 'NA1', 'NA2', 'NA3',
+                                            'NA4', 'NA5', 'NA6', 'UR'),
+                                     col_types = paste0('cccDciiiiiiiiiiiiiii',
+                                                        'iiiiillllliiiiiiiiii',
+                                                        'iiiiiiiiiiiiiiiiiic'),
+                                     # this sheet has a row above the col names:
+                                     skip = 1)
   }
   return(data)
 }
 
-import_helper = function(header) {
+import_helper = function(dataset) {
   cache_opts = get_cache_opts()
   use_cached = cache_opts$use_cached &&
     !(is.null(names(chchpd_env$cached))) &&
-    (header %in% names(chchpd_env$cached)) &&
-    (as.numeric(difftime(Sys.time(), chchpd_env$cached[[header]]$cached_time, units = 'mins')) < cache_opts$cache_time)
+    (dataset %in% names(chchpd_env$cached)) &&
+    (as.numeric(difftime(Sys.time(), chchpd_env$cached[[dataset]]$cached_time,
+                         units = 'mins')) < cache_opts$cache_duration)
 
   if (use_cached) {
-    return(chchpd_env$cached[[header]]$data)
+    return(chchpd_env$cached[[dataset]]$data)
   } else {
-    run_silent = getOption("chchpd_supress_warnings", default = TRUE)
+    run_silent = getOption("chchpd_suppress_warnings", default = TRUE)
 
     if (run_silent){
-      data = suppressWarnings(suppressMessages(import_helper_googlesheet(header)))
+      data =
+        suppressWarnings(suppressMessages(import_helper_googlesheet(dataset)))
     } else {
-      data = import_helper_googlesheet(header)
+      data = import_helper_googlesheet(dataset)
     }
 
-    chchpd_env$cached[[header]] = list()
-    chchpd_env$cached[[header]]$data = data
-    chchpd_env$cached[[header]]$cached_time = Sys.time()
+    chchpd_env$cached[[dataset]]$data = data
+    chchpd_env$cached[[dataset]]$cached_time = Sys.time()
+
     return(data)
   }
 }
