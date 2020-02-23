@@ -30,16 +30,35 @@ NULL # needed just so that roxygen will process the statements above.
 # Create a local environment to keep filenames. Better than using the global
 # environment which would be affected by rm() function.
 chchpd_env = new.env(emptyenv())
-chchpd_env$clinical_filename = 'PD Progression clinical data'
-chchpd_env$neuropsyc_filename = 'All Z-scores Progression'
-chchpd_env$redcap_neuropsyc_filename = 'RedcapExport'
-chchpd_env$scan_filename = 'PD Scan numbers'
-chchpd_env$participant_filename = 'ParticipantExport'
-chchpd_env$session_filename = 'SessionExport'
-chchpd_env$subj_session_map_filename = 'SubjectSessionMapping'
-chchpd_env$bloods_filename = 'PD Bloods Tracking'
-chchpd_env$default_recache_time = 60 # minutes to use cache data, instead of downloading again.
-chchpd_env$cached = list()
+
+# store references to the Google sheets which contain the data:
+chchpd_env$participant_file_id = # ParticipantExport spreadsheet:
+  '1WmeDr5WbUzl2uA1wMlZTJdcn_F-q-nWMEmlCKjSFInk'
+
+chchpd_env$session_file_id = # SessionExport spreadsheet:
+  '1HS_wlXRbWmGV3Db8ELuB53N6O1xVSmWJqlJ0AhyaMdY'
+
+###### This is one that googlesheets4 just refuses to read:
+chchpd_env$clinical_file_id = # PD Progression clinical data spreadsheet:
+  '14Jb3qC1Ioazmpacpwtlqw-myFtIjBGR9D2y6znLVIbs' # temp copy for testing
+#'1kcPVaCGjpHVXKfCoLkIaGPa624RiJL47q1KxmA3QWdo' # original corrupted one
+#'
+chchpd_env$redcap_neuropsyc_file_id = # RedcapExport spreadsheet:
+  '1liI06efJe1mRI3Iz2lWwq_PeZDpZLnIhhjqyN1SQlX0'
+
+chchpd_env$scan_file_id = # PD Scan numbers spreadsheet:
+  '1NVlN6GrzXuyP4u37iuO2NAfORJxC8bmaBWIZpPoyrR4'
+
+chchpd_env$subj_session_map_file_id = # SubjectSessionMapping spreadsheet:
+  '1JAmxvXPU0cQlQAlYiZUwCxk1oDTu_84w4ZZUYZo2VP4'
+
+chchpd_env$bloods_file_id = # PD Bloods Tracking spreadsheet:
+  '191uIITl3vqJKY97M87a72BVPt5CnnEZlZJ6sch8XFEU'
+
+# as data imports are slow, allow them to be automatically cached for a period:
+chchpd_env$default_recache_time = 60 # minutes
+chchpd_env$cached_data = list() # store imported dataframes here by name
+chchpd_env$cache_start = list() # store time when each data set is downloaded
 
 # functions that run when package is attached/loaded:
 .onAttach <- function(libname, pkgname) {
@@ -47,16 +66,15 @@ chchpd_env$cached = list()
                                "Longitudinal Parkinson's Study. Should be run ",
                                "only by accredited researchers at NZBRI, who ",
                                "have authorised access to the data sources."))
-  
-  
+
+
   if (is.null(getOption('chchpd_use_cached', default = NULL)))
     options(chchpd_use_cached = TRUE)
 
-  
   if (is.null(getOption('chchpd_cache_update_time', default = NULL)))
-    options(chchpd_cache_update_time = chchpd_env$default_recache_time) # 60 minutes
-  
-  if (is.null(getOption('chchpd_supress_warnings', default = NULL)))
-    options(chchpd_supress_warnings = TRUE) # Reduce warnings from googlesheets.
-  
+    options(chchpd_cache_update_time = chchpd_env$default_recache_time) # 60 min
+
+  if (is.null(getOption('chchpd_suppress_warnings', default = NULL)))
+    options(chchpd_supress_warnings = TRUE) # Reduce warnings from googlesheets
+
 }
