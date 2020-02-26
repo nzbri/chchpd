@@ -4,22 +4,18 @@
 \alias{google_authenticate}
 \title{Allow Google Drive authorisation via a server}
 \usage{
-google_authenticate(email = gargle::gargle_oauth_email(),
-  use_server = FALSE)
+google_authenticate(email = TRUE, use_server = FALSE)
 }
 \arguments{
 \item{email}{Allows you to nominate a particular nzbri.org e-mail address to
 use for authentication. This can save you having to specify it manually each
 time the script is run, but shouldn't be used in reproducible workflows
-(where other users have to be able to run the code).}
+(where other users have to be able to run the code). The default value of
+`TRUE` means that if authentication has occurred before, and there is just
+one e-mail address available to select, it will automatically do that.}
 
 \item{use_server}{If \code{TRUE}, use the copy/paste authentication process.
-If \code{FALSE}, use fully browser-contained authentication.
-
-The ability to specify \code{use_server = FALSE} is provided for completeness
-but shouldn't be necessary in most cases (maybe your script is set up to run
-either locally or on the server, and this would allow the authentication
-method to be specified conditionally).}
+If \code{FALSE}, use fully browser-contained authentication.}
 }
 \value{
 No return value: the function initiates a process which results in
@@ -30,7 +26,6 @@ the writing of a \code{.httr-oauth} token file to disk.
 user is authenticated, to ensure that you are entitled to view it.
 }
 \details{
-If using RStudio on a server, then you should run this function before
-attempting to import any datasets from the Google drive. Specifying
-`use_server = TRUE` will institute a different authentication process.
+If using RStudio on a server, specifying `use_server = TRUE` will institute
+a different authentication process to when you are running locally.
 }

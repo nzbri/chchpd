@@ -38,10 +38,8 @@ chchpd_env$participant_file_id = # ParticipantExport spreadsheet:
 chchpd_env$session_file_id = # SessionExport spreadsheet:
   '1HS_wlXRbWmGV3Db8ELuB53N6O1xVSmWJqlJ0AhyaMdY'
 
-###### This is one that googlesheets4 just refuses to read:
 chchpd_env$clinical_file_id = # PD Progression clinical data spreadsheet:
-  '14Jb3qC1Ioazmpacpwtlqw-myFtIjBGR9D2y6znLVIbs' # temp copy for testing
-#'1kcPVaCGjpHVXKfCoLkIaGPa624RiJL47q1KxmA3QWdo' # original corrupted one
+  '14Jb3qC1Ioazmpacpwtlqw-myFtIjBGR9D2y6znLVIbs' # new copy
 
 chchpd_env$redcap_neuropsyc_file_id = # RedcapExport spreadsheet:
   '1liI06efJe1mRI3Iz2lWwq_PeZDpZLnIhhjqyN1SQlX0'

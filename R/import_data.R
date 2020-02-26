@@ -1,9 +1,26 @@
-# learn if caching of data is in effect and for how long:
-get_cache_opts = function() {
-  use_cached = getOption('chchpd_use_cached', default = TRUE)
+#' View current `chchpd` package options
+#'
+#' \code{get_chchpd_options} View a list of pacakge options, such as whether
+#' data should be cached and for how long, and whether to suppress Google sheets
+#' warnings.
+#'
+#' @return A list of options and their current values.
+#'
+#' @examples
+#' \dontrun{
+#' get_chchpd_options()
+#' }
+#' @export
+get_chchpd_options = function() {
+  use_cached = getOption('chchpd_use_cached',
+                         default = TRUE)
   cache_duration = getOption('chchpd_cache_duration',
                          default = chchpd_env$default_recache_time)
-  return(list(use_cached = use_cached, cache_duration = cache_duration))
+  suppress_warnings = getOption('chchpd_suppress_warnings',
+                                default = NULL)
+  return(list(use_cached = use_cached,
+              cache_duration = cache_duration,
+              suppress_warnings = suppress_warnings))
 }
 
 # datasets are all now imported from google sheets centrally in this function,
@@ -54,8 +71,6 @@ import_helper_googlesheet = function(dataset) {
         )
     )
   } else if (dataset == 'hads') {
-    clinical_ss = googlesheets::gs_title(chchpd_env$clinical_file_id)
-
     data = googlesheets4::read_sheet(
       ss = chchpd_env$clinical_file_id,
       sheet = 'HADS',
@@ -115,9 +130,9 @@ import_helper_googlesheet = function(dataset) {
     )
   }
 
-  # tidy spaces, caps etc from variable names, except in motor scores
-  # (for backwards compatibility of capitalised variable names):
-  if ( !(dataset %in% c('mds_updrs', 'old_updrs'))) {
+  # tidy spaces, caps etc from variable names, except to retain backwards
+  # compatibility of capitalised variable names in some datasets:
+  if ( !(dataset %in% c('mds_updrs', 'old_updrs', 'hads'))) {
     data %<>% janitor::clean_names()
   }
 
@@ -133,7 +148,7 @@ import_helper_googlesheet = function(dataset) {
 # that they receive either a cached version of the data, or a freshly imported
 # version:
 import_helper = function(dataset) {
-  cache_opts = get_cache_opts()
+  cache_opts = get_chchpd_options()
 
   use_cached = cache_opts$use_cached &&
     !(is.null(names(chchpd_env$cached))) &&
@@ -168,27 +183,23 @@ import_helper = function(dataset) {
 #' \code{google_authenticate} To access data on a Google drive requires that the
 #' user is authenticated, to ensure that you are entitled to view it.
 #'
-#' If using RStudio on a server, then you should run this function before
-#' attempting to import any datasets from the Google drive. Specifying
-#' `use_server = TRUE` will institute a different authentication process.
+#' If using RStudio on a server, specifying `use_server = TRUE` will institute
+#' a different authentication process to when you are running locally.
 #'
 #' @param email Allows you to nominate a particular nzbri.org e-mail address to
 #' use for authentication. This can save you having to specify it manually each
 #' time the script is run, but shouldn't be used in reproducible workflows
-#' (where other users have to be able to run the code).
+#' (where other users have to be able to run the code). The default value of
+#' `TRUE` means that if authentication has occurred before, and there is just
+#' one e-mail address available to select, it will automatically do that.
 #'
 #' @param use_server If \code{TRUE}, use the copy/paste authentication process.
 #' If \code{FALSE}, use fully browser-contained authentication.
 #'
-#' The ability to specify \code{use_server = FALSE} is provided for completeness
-#' but shouldn't be necessary in most cases (maybe your script is set up to run
-#' either locally or on the server, and this would allow the authentication
-#' method to be specified conditionally).
-#'
 #' @return No return value: the function initiates a process which results in
 #' the writing of a \code{.httr-oauth} token file to disk.
 #' @export
-google_authenticate <- function(email = gargle::gargle_oauth_email(),
+google_authenticate <- function(email = TRUE,
                                 use_server = FALSE) {
   googlesheets4::sheets_auth(email = email,
                              use_oob = use_server)
@@ -226,11 +237,6 @@ import_participants <- function(anon_id = FALSE, identifiers = FALSE) {
   # import a file that is regularly exported via a cron job
   # from the Alice database:
   participants = import_helper('participants')
-
-  # report errors where cell contents don't match expected type for the column:
-  if (nrow(readr::problems(participants)) > 0) {
-    print(readr::problems(participants))
-  }
 
   participants %<>%
     dplyr::rename(participant_status = status,
@@ -583,11 +589,6 @@ import_old_UPDRS <- function() {
 import_HADS <- function(concise = TRUE) {
   HADS = import_helper('hads')
 
-  # report errors where cell contents don't match expected type for the column:
-  if (nrow(readr::problems(HADS)) > 0) {
-    print(kable(readr::problems(HADS)))
-  }
-
   HADS %<>% map_to_universal_session_id()
 
   # calculate component scores for the HADS:
@@ -624,11 +625,6 @@ import_HADS <- function(concise = TRUE) {
 import_medications <- function(concise = TRUE) {
   # Medications list:
   meds = import_helper('meds')
-
-  # report errors where cell contents don't match expected type for the column:
-  if (nrow(readr::problems(meds)) > 0) {
-    print(readr::problems(meds))
-  }
 
   meds %<>%
     # alter format of some columns:
@@ -739,11 +735,6 @@ import_medications <- function(concise = TRUE) {
 #' @export
 import_neuropsyc <- function(concise = TRUE) {
   np = import_helper('np')
-
-  # report errors where cell contents don't match expected type for the column:
-  if (nrow(readr::problems(np)) > 0) {
-    print(readr::problems(np))
-  }
 
   np %<>% # name selected variables neatly
     dplyr::rename(session_date = np1_date,
