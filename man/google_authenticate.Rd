@@ -4,16 +4,18 @@
 \alias{google_authenticate}
 \title{Allow Google Drive authorisation via a server}
 \usage{
-google_authenticate(use_server = TRUE)
+google_authenticate(email = TRUE, use_server = FALSE)
 }
 \arguments{
-\item{use_server}{If \code{TRUE}, use the copy/paste authentication process.
-If \code{FALSE}, use fully browser-contained authentication.
+\item{email}{Allows you to nominate a particular nzbri.org e-mail address to
+use for authentication. This can save you having to specify it manually each
+time the script is run, but shouldn't be used in reproducible workflows
+(where other users have to be able to run the code). The default value of
+`TRUE` means that if authentication has occurred before, and there is just
+one e-mail address available to select, it will automatically do that.}
 
-The ability to specify \code{use_server = FALSE} is provided for completeness
-but shouldn't be necessary in most cases (maybe your script is set up to run
-either locally or on the server, and this would allow the authentication
-method to be specified conditionally).}
+\item{use_server}{If \code{TRUE}, use the copy/paste authentication process.
+If \code{FALSE}, use fully browser-contained authentication.}
 }
 \value{
 No return value: the function initiates a process which results in
@@ -21,24 +23,9 @@ the writing of a \code{.httr-oauth} token file to disk.
 }
 \description{
 \code{google_authenticate} To access data on a Google drive requires that the
-user is authenticated. This will happen automatically if required when using
-any of the \code{import_} functions in this package. The standard
-browser-based authorisation process will not work, however, when running
-RStudio via a server (because the IP addresses of the user's computer and the
-server do not match). This function allows authorisation to proceed for
-server-based users.
+user is authenticated, to ensure that you are entitled to view it.
 }
 \details{
-If using RStudio on a server, then you should run this function before
-attempting to import any datasets from the Google drive. This will institute
-a different authentication process. You will still be taken to a webpage,
-but instead of authenticating within that page, you will be given a string
-of characters to copy. You must then paste that into the RStudio console
-(there should be a prompt there expecting this input). This will generate
-an authentication token that will be stored on your folder on the server.
-Be aware that this token (in the \code{.httr-oauth} file) could allow any
-user to access your files and privileges on the Google drive. Do not
-transmit or distribute it, or allow it to be included in version control
-(this also applies if this file is created in a local folder when
-running RStudio on your own computer).
+If using RStudio on a server, specifying `use_server = TRUE` will institute
+a different authentication process to when you are running locally.
 }
