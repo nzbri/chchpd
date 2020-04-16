@@ -624,13 +624,7 @@ import_HADS <- function(concise = TRUE) {
 #' @export
 import_medications <- function(concise = TRUE) {
   # Medications list:
-  meds = import_helper('meds')
-
-  meds %<>%
-    # alter format of some columns:
-    dplyr::mutate(apomorphine = as.numeric(apomorphine),
-                  duodopa = as.numeric(duodopa),
-                  cr_tolcapone = as.numeric(cr_tolcapone)) %>%
+  meds = import_helper('meds') %>%
     map_to_universal_session_id()
 
   ## calculate levodopa equivalent dose (LED)
