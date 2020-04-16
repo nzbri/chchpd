@@ -638,7 +638,7 @@ import_medications <- function(concise = TRUE) {
   # each type of medication (mg/day).
 
   # replace all NAs with 0 in the medication dose columns (from 6 onwards):
-  meds[6:ncol(meds)][is.na(meds[6:ncol(meds)])] <- 0
+  meds[6:(ncol(meds)-2)][is.na(meds[6:(ncol(meds)-2)])] <- 0
 
   ## calculate the LED subtotal for each type of medication.
   # total immediate release l-dopa - combination of sinemet, madopar, sindopa,
