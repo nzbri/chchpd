@@ -11,6 +11,9 @@
 # HOWTO
 
 ## Tag a release:
+
+- manually update version number in the DESCRIPTION file
+
 git tag -a v0.2.2 -m "Some description of the release"
 git push --follow-tags
 
