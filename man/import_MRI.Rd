@@ -4,7 +4,7 @@
 \alias{import_MRI}
 \title{Import metadata on MRI scans}
 \usage{
-import_MRI(exclude = TRUE)
+import_MRI(exclude = TRUE, print_exclude_summary = TRUE)
 }
 \arguments{
 \item{exclude}{If \code{TRUE}, don't return records marked as excluded.}

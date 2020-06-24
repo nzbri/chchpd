@@ -14,12 +14,9 @@
 get_chchpd_options = function() {
   use_cached = getOption('chchpd_use_cached',
                          default = TRUE)
-  cache_duration = getOption('chchpd_cache_duration',
-                         default = chchpd_env$default_recache_time)
   suppress_warnings = getOption('chchpd_suppress_warnings',
                                 default = NULL)
   return(list(use_cached = use_cached,
-              cache_duration = cache_duration,
               suppress_warnings = suppress_warnings))
 }
 
@@ -32,20 +29,20 @@ import_helper_googlesheet = function(dataset) {
   dataset = tolower(dataset) # label of spreadsheet to import (e.g. HADS)
 
   if (dataset == 'session_code_map') {
-    data = googlesheets4::read_sheet(ss = chchpd_env$subj_session_map_file_id,
+    data = googlesheets4::range_read(ss = chchpd_env$subj_session_map_file_id,
                                      col_types = 'cccc')
   } else if (dataset == 'participants') {
-    data = googlesheets4::read_sheet(
+    data = googlesheets4::range_read(
       ss = chchpd_env$participant_file_id,
       na = c('NA', 'None'),
       col_types =
         'ccccDncnnccccccccccnncccDccccc'
     )
   } else if (dataset == 'sessions') {
-    data = googlesheets4::read_sheet(ss = chchpd_env$session_file_id,
+    data = googlesheets4::range_read(ss = chchpd_env$session_file_id,
                                      col_types = 'ccDnccccncccccDDDDDDDD')
   } else if (dataset == 'mds_updrs') {
-    data = googlesheets4::read_sheet(
+    data = googlesheets4::range_read(
       ss = chchpd_env$clinical_file_id,
       sheet = 'MDS_UPDRS',
       na = c('na', 'NA', 'NA1', 'NA2', 'NA3', 'NA4', 'NA5', 'NA6', 'UR'),
@@ -59,7 +56,7 @@ import_helper_googlesheet = function(dataset) {
     )
 
   } else if (dataset == 'old_updrs') {
-    data = googlesheets4::read_sheet(
+    data = googlesheets4::range_read(
       ss = chchpd_env$clinical_file_id,
       sheet = 'Old_UPDRS',
       na = c('na', 'NA', 'NA1', 'NA2', 'NA3', 'NA4', 'NA5', 'NA6', 'UR'),
@@ -71,7 +68,7 @@ import_helper_googlesheet = function(dataset) {
         )
     )
   } else if (dataset == 'hads') {
-    data = googlesheets4::read_sheet(
+    data = googlesheets4::range_read(
       ss = chchpd_env$clinical_file_id,
       sheet = 'HADS',
       na = c('NA', 'NA1', 'NA2', 'NA3', 'NA4', 'NA5', 'NA6'),
@@ -82,7 +79,7 @@ import_helper_googlesheet = function(dataset) {
     # calculate them afresh anyway
 
   } else if (dataset == 'meds') {
-    data = googlesheets4::read_sheet(
+    data = googlesheets4::range_read(
       ss = chchpd_env$clinical_file_id,
       sheet = 'Medication',
       na = c('NA', 'NA1', 'NA2', 'NA3', 'NA4', 'NA5', 'NA6'),
@@ -90,7 +87,7 @@ import_helper_googlesheet = function(dataset) {
     )
 
   } else if (dataset == 'np') {
-    data = googlesheets4::read_sheet(
+    data = googlesheets4::range_read(
       ss = chchpd_env$redcap_neuropsyc_file_id,
       na = 'NA',
       col_types = paste0(
@@ -101,21 +98,21 @@ import_helper_googlesheet = function(dataset) {
       )
     )
   } else if (dataset == 'mri') {
-    data = googlesheets4::read_sheet(ss = chchpd_env$scan_file_id,
+    data = googlesheets4::range_read(ss = chchpd_env$scan_file_id,
                                       sheet = 'MRI_scans',
                                       col_types = 'cccDccccccccccccccccccccc')
   } else if (dataset == 'pet') {
-    data = googlesheets4::read_sheet(ss = chchpd_env$scan_file_id,
+    data = googlesheets4::range_read(ss = chchpd_env$scan_file_id,
                                      sheet = 'PET_scans',
                                      col_types = 'ccDDcDccccccccccccccccc')
   } else if (dataset == 'bloods') {
-    data = googlesheets4::read_sheet(
+    data = googlesheets4::range_read(
       ss = chchpd_env$bloods_file_id,
       sheet = 'data',
       col_types = 'cccDnnnncccc'
     )
   } else if (dataset == 'hallucinations') {
-    data = googlesheets4::read_sheet(
+    data = googlesheets4::range_read(
       ss = chchpd_env$clinical_file_id,
       sheet = 'Hallucinations Questionnaire',
       na = c('N/A', 'NA', 'NA1', 'NA2', 'NA3',
@@ -150,31 +147,97 @@ import_helper_googlesheet = function(dataset) {
 import_helper = function(dataset) {
   cache_opts = get_chchpd_options()
 
+  sheet_modified_time = get_modifiedtime_googlesheet(dataset)
+  
   use_cached = cache_opts$use_cached &&
     !(is.null(names(chchpd_env$cached))) &&
     (dataset %in% names(chchpd_env$cached)) &&
     (as.numeric(
-      difftime(Sys.time(), chchpd_env$cached[[dataset]]$cached_time,
-               units = 'mins')
-    ) < cache_opts$cache_duration)
+      difftime(sheet_modified_time, chchpd_env$cached[[dataset]]$cached_time,
+               units = 'sec')
+    ) < 1)
 
   if (use_cached) {
     return(chchpd_env$cached[[dataset]]$data)
   } else { # import afresh from the google sheet:
     run_silent = getOption('chchpd_suppress_warnings', default = TRUE)
+    
+    print_message = TRUE
+    while( as.numeric(difftime(Sys.time(), sheet_modified_time, units = 'sec')) < 10 ){
+      if (print_message){
+        print('The specified googlesheet is updating, please wait ...')
+        print_message = FALSE
+      }
+      
+      sheet_modified_time = get_modifiedtime_googlesheet(dataset)
+    }
 
-    if (run_silent) {
-      data =
-        suppressWarnings(suppressMessages(import_helper_googlesheet(dataset)))
-    } else {
-      data = import_helper_googlesheet(dataset)
+    sanity_check = FALSE
+    
+    while (!sanity_check){
+      
+      if (run_silent) {
+        data =
+          suppressWarnings(suppressMessages(import_helper_googlesheet(dataset)))
+      } else {
+        data = import_helper_googlesheet(dataset)
+      }
+      
+      sheet_modified_time_after_download = get_modifiedtime_googlesheet(dataset)
+      
+      if (as.numeric(difftime(sheet_modified_time_after_download, sheet_modified_time, units = 'sec')) < 1)
+      {
+        sanity_check = TRUE
+      } else {
+        sheet_modified_time = sheet_modified_time_after_download
+        print('Googlesheet was modified during the download. It will be downloaded again after 5 sec ... ')
+        Sys.sleep(5)
+      }
+      
     }
 
     chchpd_env$cached[[dataset]]$data = data
-    chchpd_env$cached[[dataset]]$cached_time = Sys.time()
+    chchpd_env$cached[[dataset]]$cached_time = sheet_modified_time
 
     return(data)
   }
+}
+
+# A routine to identify modification time of a googlesheet.
+get_modifiedtime_googlesheet = function(dataset) {
+  dataset = tolower(dataset) # label of spreadsheet to import (e.g. HADS)
+  
+  if (dataset == 'session_code_map') {
+    file_id = chchpd_env$subj_session_map_file_id
+  } else if (dataset == 'participants') {
+    file_id = chchpd_env$participant_file_id
+  } else if (dataset == 'sessions') {
+    file_id = chchpd_env$session_file_id
+  } else if (dataset == 'mds_updrs') {
+    file_id = chchpd_env$clinical_file_id
+  } else if (dataset == 'old_updrs') {
+    file_id = chchpd_env$clinical_file_id
+  } else if (dataset == 'hads') {
+    file_id = chchpd_env$clinical_file_id
+  } else if (dataset == 'meds') {
+    file_id = chchpd_env$clinical_file_id
+  } else if (dataset == 'np') {
+    file_id = chchpd_env$redcap_neuropsyc_file_id
+  } else if (dataset == 'mri') {
+    file_id = chchpd_env$scan_file_id
+  } else if (dataset == 'pet') {
+    file_id = chchpd_env$scan_file_id
+  } else if (dataset == 'bloods') {
+    file_id = chchpd_env$bloods_file_id
+  } else if (dataset == 'hallucinations') {
+    file_id = chchpd_env$clinical_file_id
+  }
+  
+  modified_time = googledrive::drive_get(id = file_id) %>% 
+    dplyr::mutate(modified = lubridate::as_datetime(purrr::map_chr(drive_resource, "modifiedTime"))) %>% 
+    dplyr::select(modified)
+  
+  return(modified_time$modified)
 }
 
 
@@ -201,8 +264,11 @@ import_helper = function(dataset) {
 #' @export
 google_authenticate <- function(email = TRUE,
                                 use_server = FALSE) {
-  googlesheets4::sheets_auth(email = email,
+  googlesheets4::gs4_auth(email = email,
                              use_oob = use_server)
+  
+  googledrive::drive_auth(email = email,
+                          use_oob = use_server)
 }
 
 #' Import participant demographics
@@ -291,7 +357,6 @@ import_participants <- function(anon_id = FALSE, identifiers = FALSE) {
   }
 
   tabulate_duplicates(participants, 'subject_id')
-
   return(participants)
 }
 
@@ -320,7 +385,7 @@ import_participants <- function(anon_id = FALSE, identifiers = FALSE) {
 #' sessions = import_sessions()
 #' }
 #' @export
-import_sessions <- function(from_study = NULL, exclude = TRUE) {
+import_sessions <- function(from_study = NULL, exclude = TRUE, print_exclude_summary = TRUE) {
 
   # import a file that is regularly exported via a cron job
   # from the Alice database:
@@ -339,6 +404,19 @@ import_sessions <- function(from_study = NULL, exclude = TRUE) {
                                 remove_double_measures = FALSE)
 
   if (exclude) {
+    excluded_session <- sessions %>% 
+      dplyr::filter(!is.na(study_excluded) & study_excluded == TRUE) 
+    
+    if (print_exclude_summary & nrow(excluded_session) > 0){
+      exclusion_summary = excluded_session %>% 
+        dplyr::ungroup() %>%
+        dplyr::group_by(study) %>%
+        dplyr::summarise(`Excluded sessions` = dplyr::n())
+      
+      
+      print(knitr::kable(exclusion_summary, caption = 'Automatically excluded sessions.', align = 'l'))
+    }
+    
     sessions %<>% dplyr::filter(is.na(study_excluded) | study_excluded != TRUE)
   }
 
@@ -813,7 +891,7 @@ import_neuropsyc <- function(concise = TRUE) {
 #' mri = import_MRI()
 #' }
 #' @export
-import_MRI <- function(exclude = TRUE) {
+import_MRI <- function(exclude = TRUE, print_exclude_summary = TRUE) {
   # Import data on MRI scans
 
   # Need a handle to the scan numbers Google sheet.
@@ -825,6 +903,16 @@ import_MRI <- function(exclude = TRUE) {
     dplyr::mutate(subject_id = sanitise_session_ids(subject_id))
 
   if (exclude) {
+    excluded_MRI = MRI %>%
+      dplyr::filter(!is.na(mri_excluded) & mri_excluded != 'Included')
+    
+    if (print_exclude_summary & nrow(excluded_MRI)>0){
+      excluded_MRI %>% 
+        dplyr::select(subject_id, scan_number, scan_date) %>%
+        knitr::kable(caption = 'Automatically excluded MRI scans.') %>% 
+        print()
+    }
+    
     MRI %<>%
       dplyr::filter(is.na(mri_excluded) | mri_excluded == 'Included') %>%
       dplyr::select(-mri_excluded, -study)

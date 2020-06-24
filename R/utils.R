@@ -27,6 +27,17 @@ output_graph = function(graph){
   }
 }
 
+#' Clear cached data and force to download afresh from Googlesheets.
+#' 
+#' @examples
+#' \dontrun{
+#' clear_chchpd_cache()
+#' }
+#' @export
+clear_chchpd_cache = function(){
+  chchpd_env$cached = list() # reset cached data
+}
+
 
 
 output_graph2 = function(graph){

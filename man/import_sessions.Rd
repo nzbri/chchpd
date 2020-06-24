@@ -4,7 +4,11 @@
 \alias{import_sessions}
 \title{Import links between sessions and studies}
 \usage{
-import_sessions(from_study = NULL, exclude = TRUE)
+import_sessions(
+  from_study = NULL,
+  exclude = TRUE,
+  print_exclude_summary = TRUE
+)
 }
 \arguments{
 \item{from_study}{Optionally specify the name of a specific study to limit

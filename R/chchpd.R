@@ -53,10 +53,8 @@ chchpd_env$subj_session_map_file_id = # SubjectSessionMapping spreadsheet:
 chchpd_env$bloods_file_id = # PD Bloods Tracking spreadsheet:
   '191uIITl3vqJKY97M87a72BVPt5CnnEZlZJ6sch8XFEU'
 
-# as data imports are slow, allow them to be automatically cached for a period:
-chchpd_env$default_recache_time = 60 # minutes
-chchpd_env$cached_data = list() # store imported dataframes here by name
-chchpd_env$cached_time = list() # store time when each data set is downloaded
+# as data imports are slow, allow them to be automatically cached until the source has changed:
+chchpd_env$cached = list() # store imported dataframes here by name
 
 # functions that run when package is attached/loaded:
 .onAttach <- function(libname, pkgname) {
@@ -68,9 +66,6 @@ chchpd_env$cached_time = list() # store time when each data set is downloaded
 
   if (is.null(getOption('chchpd_use_cached', default = NULL)))
     options(chchpd_use_cached = TRUE)
-
-  if (is.null(getOption('chchpd_cache_duration', default = NULL)))
-    options(chchpd_cache_duration = chchpd_env$default_recache_time) # 60 min
 
   if (is.null(getOption('chchpd_suppress_warnings', default = NULL)))
     options(chchpd_suppress_warnings = TRUE) # Reduce warnings from googlesheets
