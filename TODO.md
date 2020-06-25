@@ -17,3 +17,9 @@
 git tag -a v0.2.2 -m "Some description of the release"
 git push --follow-tags
 
+Multiline tag message:
+git tag -a v1.0.0 -m "* Change number 1
+* Change number 2"
+
+Don't forget to knit the README.Rmd file to produce the coresponding .md file for the Github page. This doesn't happen automatically when generating the other documentation.
+

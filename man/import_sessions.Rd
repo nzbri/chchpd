@@ -4,7 +4,11 @@
 \alias{import_sessions}
 \title{Import links between sessions and studies}
 \usage{
-import_sessions(from_study = NULL, exclude = TRUE)
+import_sessions(
+  from_study = NULL,
+  exclude = TRUE,
+  print_exclude_summary = TRUE
+)
 }
 \arguments{
 \item{from_study}{Optionally specify the name of a specific study to limit
@@ -15,7 +19,16 @@ include sessions from multiple studies, e.g.
 \code{c('Follow-up', 'PD DNA')}.}
 
 \item{exclude}{If \code{TRUE}, don't return sessions that have been excluded
-from a given study.}
+from a given study. For safety, we default to \code{TRUE} so that you don't
+get junk data unless you explicitly ask for it. You might set this to
+\code{FALSE} in order to get all records if you need to document
+exclusions, for example to create a participant recruitment and exclusion
+flowchart.}
+
+\item{print_exclude_summary}{If \code{TRUE}, print a table that lists
+the number of records that are excluded from each study. If this looks
+problematic, you could set \code{exclude = FALSE} to import all records to
+identify which ones were excluded.}
 }
 \value{
 A dataframe containing the session-group-study data.
