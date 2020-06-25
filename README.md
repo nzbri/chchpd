@@ -59,7 +59,7 @@ be careful not to post anything that contains identifiers.
 ## Example usage
 
 Records across the various tables must be joined using either
-`subject_id` as an index (e.g. for linking to the participant table, as
+`subject_id` as an index (e.g. for linking to the participant table, as
 it includes information, such as sex, that is constant for a subject),
 or `session_id` (to join various measures gathered at approximately the
 same assessment session for a given participant), as these might change
@@ -78,7 +78,7 @@ subject session mapping table, which would have a record for both the
 standardised session code, which has a form like `999BIO_2016-01-28`.
 When importing various data sources (like HADS or UPDRS), their
 idosyncratic session labels are replaced by this standardised form. Thus
-it is easy to join multiple tables togther systematically, as below.
+it is easy to join multiple tables together systematically, as below.
 Often a key step is to specify just a restricted set of sessions, by
 specifying a particular study to filter them by. In the example code
 below, we select just those sessions in the ‘PET’ study.
@@ -98,8 +98,7 @@ np           = import_neuropsyc()
 updrs        = import_motor_scores()
 
 # bind the records together, linked by subject or session IDs:
-dat = 
-  right_join(participants, sessions, by = 'subject_id') %>% 
+dat = right_join(participants, sessions, by = 'subject_id') %>% 
   left_join(np, by = 'session_id') %>% 
   left_join(updrs, by = 'session_id')
 ```

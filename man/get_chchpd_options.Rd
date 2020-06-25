@@ -10,7 +10,7 @@ get_chchpd_options()
 A list of options and their current values.
 }
 \description{
-\code{get_chchpd_options} View a list of pacakge options, such as whether
+\code{get_chchpd_options} View a list of package options, such as whether
 data should be cached and for how long, and whether to suppress Google sheets
 warnings.
 }

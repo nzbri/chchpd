@@ -82,7 +82,7 @@ the `999BIO_F2` and `999BIO_PET0` sessions, linking them to the same
 standardised session code, which has a form like `999BIO_2016-01-28`. When 
 importing various data sources (like HADS or UPDRS), their idosyncratic session 
 labels are replaced by this standardised form. Thus it is easy to join multiple 
-tables togther systematically, as below. Often a key step is to specify just a 
+tables together systematically, as below. Often a key step is to specify just a 
 restricted set of sessions, by specifying a particular study to filter them by. 
 In the example code below, we select just those sessions in the 'PET' study.
 

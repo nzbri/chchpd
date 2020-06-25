@@ -1,6 +1,6 @@
 #' View current `chchpd` package options
 #'
-#' \code{get_chchpd_options} View a list of pacakge options, such as whether
+#' \code{get_chchpd_options} View a list of package options, such as whether
 #' data should be cached and for how long, and whether to suppress Google sheets
 #' warnings.
 #'
@@ -147,8 +147,8 @@ import_helper_googlesheet = function(dataset) {
 import_helper = function(dataset) {
   cache_opts = get_chchpd_options()
 
-  sheet_modified_time = get_modifiedtime_googlesheet(dataset)
-  
+  sheet_modified_time = get_googlesheet_modifiedtime(dataset)
+
   use_cached = cache_opts$use_cached &&
     !(is.null(names(chchpd_env$cached))) &&
     (dataset %in% names(chchpd_env$cached)) &&
@@ -161,30 +161,30 @@ import_helper = function(dataset) {
     return(chchpd_env$cached[[dataset]]$data)
   } else { # import afresh from the google sheet:
     run_silent = getOption('chchpd_suppress_warnings', default = TRUE)
-    
+
     print_message = TRUE
     while( as.numeric(difftime(Sys.time(), sheet_modified_time, units = 'sec')) < 10 ){
       if (print_message){
         print('The specified googlesheet is updating, please wait ...')
         print_message = FALSE
       }
-      
-      sheet_modified_time = get_modifiedtime_googlesheet(dataset)
+
+      sheet_modified_time = get_googlesheet_modifiedtime(dataset)
     }
 
     sanity_check = FALSE
-    
+
     while (!sanity_check){
-      
+
       if (run_silent) {
         data =
           suppressWarnings(suppressMessages(import_helper_googlesheet(dataset)))
       } else {
         data = import_helper_googlesheet(dataset)
       }
-      
-      sheet_modified_time_after_download = get_modifiedtime_googlesheet(dataset)
-      
+
+      sheet_modified_time_after_download = get_googlesheet_modifiedtime(dataset)
+
       if (as.numeric(difftime(sheet_modified_time_after_download, sheet_modified_time, units = 'sec')) < 1)
       {
         sanity_check = TRUE
@@ -193,7 +193,7 @@ import_helper = function(dataset) {
         print('Googlesheet was modified during the download. It will be downloaded again after 5 sec ... ')
         Sys.sleep(5)
       }
-      
+
     }
 
     chchpd_env$cached[[dataset]]$data = data
@@ -204,9 +204,9 @@ import_helper = function(dataset) {
 }
 
 # A routine to identify modification time of a googlesheet.
-get_modifiedtime_googlesheet = function(dataset) {
+get_googlesheet_modifiedtime = function(dataset) {
   dataset = tolower(dataset) # label of spreadsheet to import (e.g. HADS)
-  
+
   if (dataset == 'session_code_map') {
     file_id = chchpd_env$subj_session_map_file_id
   } else if (dataset == 'participants') {
@@ -232,11 +232,11 @@ get_modifiedtime_googlesheet = function(dataset) {
   } else if (dataset == 'hallucinations') {
     file_id = chchpd_env$clinical_file_id
   }
-  
-  modified_time = googledrive::drive_get(id = file_id) %>% 
-    dplyr::mutate(modified = lubridate::as_datetime(purrr::map_chr(drive_resource, "modifiedTime"))) %>% 
+
+  modified_time = googledrive::drive_get(id = file_id) %>%
+    dplyr::mutate(modified = lubridate::as_datetime(purrr::map_chr(drive_resource, "modifiedTime"))) %>%
     dplyr::select(modified)
-  
+
   return(modified_time$modified)
 }
 
@@ -266,7 +266,7 @@ google_authenticate <- function(email = TRUE,
                                 use_server = FALSE) {
   googlesheets4::gs4_auth(email = email,
                              use_oob = use_server)
-  
+
   googledrive::drive_auth(email = email,
                           use_oob = use_server)
 }
@@ -376,7 +376,16 @@ import_participants <- function(anon_id = FALSE, identifiers = FALSE) {
 #'   \code{c('Follow-up', 'PD DNA')}.
 #'
 #' @param exclude If \code{TRUE}, don't return sessions that have been excluded
-#'   from a given study.
+#'   from a given study. For safety, we default to \code{TRUE} so that you don't
+#'   get junk data unless you explicitly ask for it. You might set this to
+#'   \code{FALSE} in order to get all records if you need to document
+#'   exclusions, for example to create a participant recruitment and exclusion
+#'   flowchart.
+#'
+#' @param print_exclude_summary If \code{TRUE}, print a table that lists
+#'   the number of records that are excluded from each study. If this looks
+#'   problematic, you could set \code{exclude = FALSE} to import all records to
+#'   identify which ones were excluded.
 #'
 #' @return A dataframe containing the session-group-study data.
 #'
@@ -404,19 +413,20 @@ import_sessions <- function(from_study = NULL, exclude = TRUE, print_exclude_sum
                                 remove_double_measures = FALSE)
 
   if (exclude) {
-    excluded_session <- sessions %>% 
-      dplyr::filter(!is.na(study_excluded) & study_excluded == TRUE) 
-    
+    excluded_session <- sessions %>%
+      dplyr::filter(!is.na(study_excluded) & study_excluded == TRUE)
+
     if (print_exclude_summary & nrow(excluded_session) > 0){
-      exclusion_summary = excluded_session %>% 
+      cat('Excluded cases:')
+      exclusion_summary = excluded_session %>%
         dplyr::ungroup() %>%
         dplyr::group_by(study) %>%
         dplyr::summarise(`Excluded sessions` = dplyr::n())
-      
-      
+
+
       print(knitr::kable(exclusion_summary, caption = 'Automatically excluded sessions.', align = 'l'))
     }
-    
+
     sessions %<>% dplyr::filter(is.na(study_excluded) | study_excluded != TRUE)
   }
 
@@ -506,7 +516,7 @@ import_motor_scores <- function() {
     dplyr::group_by(session_id) %>%
     dplyr::arrange(desc(UPDRS_date)) %>%
     # count duplicates within a session:
-    dplyr::mutate(n = row_number()) %>% # n==1 will be the lastest one
+    dplyr::mutate(n = dplyr::row_number()) %>% # n==1 will be the latest one
     dplyr::filter(n == 1) %>% # remove all but last record
     dplyr::select(-n, -UPDRS_date) # drop the temporary counter
 
@@ -778,7 +788,7 @@ import_medications <- function(concise = TRUE) {
     dplyr::group_by(session_id) %>%
     dplyr::arrange(desc(med_date)) %>%
     # count duplicates within a session:
-    dplyr::mutate(n = row_number()) %>% # n==1 will be the latest one
+    dplyr::mutate(n = dplyr::row_number()) %>% # n==1 will be the latest one
     dplyr::filter(n == 1) %>% # remove all but last record
     dplyr::select(-n) # drop the temporary counter
 
@@ -882,6 +892,17 @@ import_neuropsyc <- function(concise = TRUE) {
 #' \code{import_MRI} accesses the scan number and associated information
 #'  from each MRI scanning session.
 #'
+#' @param exclude If \code{TRUE}, don't return sessions that have been marked as
+#'   excluded. For safety, we default to \code{TRUE} so that you don't get junk
+#'   data unless you explicitly ask for it. You might set this to \code{FALSE}
+#'   in order to get all records if you need to document exclusions, for example
+#'  to create a participant recruitment and exclusion flowchart.
+#'
+#' @param print_exclude_summary If \code{TRUE}, print a table that lists
+#'   the number of records that have been excluded. If this looks problematic,
+#'   you could set \code{exclude = FALSE} to import all records to identify
+#'   which ones were excluded.
+#'
 #' @param exclude If \code{TRUE}, don't return records marked as excluded.
 #'
 #' @return A dataframe containing the MRI metadata.
@@ -905,14 +926,15 @@ import_MRI <- function(exclude = TRUE, print_exclude_summary = TRUE) {
   if (exclude) {
     excluded_MRI = MRI %>%
       dplyr::filter(!is.na(mri_excluded) & mri_excluded != 'Included')
-    
+
     if (print_exclude_summary & nrow(excluded_MRI)>0){
-      excluded_MRI %>% 
+      cat('Excluded cases:')
+      excluded_MRI %>%
         dplyr::select(subject_id, scan_number, scan_date) %>%
-        knitr::kable(caption = 'Automatically excluded MRI scans.') %>% 
+        knitr::kable(caption = 'Automatically excluded MRI scans.') %>%
         print()
     }
-    
+
     MRI %<>%
       dplyr::filter(is.na(mri_excluded) | mri_excluded == 'Included') %>%
       dplyr::select(-mri_excluded, -study)

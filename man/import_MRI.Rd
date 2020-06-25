@@ -8,6 +8,11 @@ import_MRI(exclude = TRUE, print_exclude_summary = TRUE)
 }
 \arguments{
 \item{exclude}{If \code{TRUE}, don't return records marked as excluded.}
+
+\item{print_exclude_summary}{If \code{TRUE}, print a table that lists
+the number of records that have been excluded. If this looks problematic,
+you could set \code{exclude = FALSE} to import all records to identify
+which ones were excluded.}
 }
 \value{
 A dataframe containing the MRI metadata.
