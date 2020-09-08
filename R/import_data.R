@@ -264,11 +264,14 @@ get_googlesheet_modifiedtime = function(dataset) {
 #' @export
 google_authenticate <- function(email = TRUE,
                                 use_server = FALSE) {
+  
   googlesheets4::gs4_auth(email = email,
-                             use_oob = use_server)
+                          use_oob = use_server, 
+                          scopes = c("https://www.googleapis.com/auth/drive", 
+                                     "https://www.googleapis.com/auth/spreadsheets"))
 
-  googledrive::drive_auth(email = email,
-                          use_oob = use_server)
+  googledrive::drive_auth(token = googlesheets4::gs4_token())
+  
 }
 
 #' Import participant demographics
