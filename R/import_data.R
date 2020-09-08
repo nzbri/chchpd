@@ -267,8 +267,7 @@ google_authenticate <- function(email = TRUE,
   googlesheets4::gs4_auth(email = email,
                              use_oob = use_server)
 
-  googledrive::drive_auth(email = email,
-                          use_oob = use_server)
+  googledrive::drive_auth(token = googlesheets4::gs4_token())
 }
 
 #' Import participant demographics
