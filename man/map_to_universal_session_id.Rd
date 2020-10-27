@@ -4,8 +4,12 @@
 \alias{map_to_universal_session_id}
 \title{Change idiosyncratic session ID codes to a consistent canonical form}
 \usage{
-map_to_universal_session_id(dataset, make_session_label = TRUE,
-  remove_double_measures = TRUE, drop_original_columns = TRUE)
+map_to_universal_session_id(
+  dataset,
+  make_session_label = TRUE,
+  remove_double_measures = TRUE,
+  drop_original_columns = TRUE
+)
 }
 \arguments{
 \item{dataset}{A dataframe containing a session ID column that needs to be

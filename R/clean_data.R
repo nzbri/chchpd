@@ -38,8 +38,7 @@ map_to_universal_session_id <- function(dataset,
 
   # import the lookup table from a file that is regularly exported via
   # a cron job from the Alice database:
-  session_code_map = googlesheets::gs_title(chchpd_env$subj_session_map_filename) %>%
-    googlesheets::gs_read() %>%
+  session_code_map = import_helper('session_code_map') %>%
     dplyr::rename(session_suffix = session_id) %>%
     tidyr::unite(col = input_id, subject_id, session_suffix,
                  sep = '_', remove = TRUE) %>%
@@ -119,12 +118,12 @@ map_to_universal_session_id <- function(dataset,
 #' @export
 tabulate_duplicates <- function(df, varname, print_results = FALSE) {
   duplicates = df %>%
-    dplyr::group_by_(varname) %>% # group_by_() works programatically
-    dplyr::summarise(n = n()) %>%
+    dplyr::group_by(  .data[[varname]] ) %>% # works programatically
+    dplyr::summarise(n = dplyr::n()) %>%
     dplyr::filter(n > 1) %>%
-    dplyr::arrange_('n', varname) %>% # arrange_() works programatically
+    dplyr::arrange('n', {{ varname }}) %>% # works programatically
     dplyr::arrange(desc(n)) %>%
-    dplyr::select_(varname, 'n')
+    dplyr::select({{ varname }}, 'n')
 
   if (print_results & nrow(duplicates) > 0) {
     print('Duplicates:')

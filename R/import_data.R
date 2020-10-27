@@ -1,40 +1,286 @@
+#' View current `chchpd` package options
+#'
+#' \code{get_chchpd_options} View a list of package options, such as whether
+#' data should be cached and for how long, and whether to suppress Google sheets
+#' warnings.
+#'
+#' @return A list of options and their current values.
+#'
+#' @examples
+#' \dontrun{
+#' get_chchpd_options()
+#' }
+#' @export
+get_chchpd_options = function() {
+  use_cached = getOption('chchpd_use_cached',
+                         default = TRUE)
+  suppress_warnings = getOption('chchpd_suppress_warnings',
+                                default = NULL)
+  return(list(use_cached = use_cached,
+              suppress_warnings = suppress_warnings))
+}
+
+# datasets are all now imported from google sheets centrally in this function,
+# which is only called if the import_helper function has determined that caching
+# is not in effect. Previously, the initial import was done in each of the
+# individual dataset import functions. They now serve only to do the processing
+# and tidying of the raw datasets.
+import_helper_googlesheet = function(dataset) {
+  dataset = tolower(dataset) # label of spreadsheet to import (e.g. HADS)
+
+  if (dataset == 'session_code_map') {
+    data = googlesheets4::range_read(ss = chchpd_env$subj_session_map_file_id,
+                                     col_types = 'cccc')
+  } else if (dataset == 'participants') {
+    data = googlesheets4::range_read(
+      ss = chchpd_env$participant_file_id,
+      na = c('NA', 'None'),
+      col_types =
+        'ccccDncnnccccccccccnncccDccccc'
+    )
+  } else if (dataset == 'sessions') {
+    data = googlesheets4::range_read(ss = chchpd_env$session_file_id,
+                                     col_types = 'ccDnccccncccccDDDDDDDD')
+  } else if (dataset == 'mds_updrs') {
+    data = googlesheets4::range_read(
+      ss = chchpd_env$clinical_file_id,
+      sheet = 'MDS_UPDRS',
+      na = c('na', 'NA', 'NA1', 'NA2', 'NA3', 'NA4', 'NA5', 'NA6', 'UR'),
+      col_types =
+        paste0(
+          'cccccDnnnnnnnnnnnnnn',
+          'nnnnnnnnnnnnnnnnnnnn',
+          'nnnnnnnnnnnnnnnnnnnn',
+          'nnnnnncccccccccccccc'
+        )
+    )
+
+  } else if (dataset == 'old_updrs') {
+    data = googlesheets4::range_read(
+      ss = chchpd_env$clinical_file_id,
+      sheet = 'Old_UPDRS',
+      na = c('na', 'NA', 'NA1', 'NA2', 'NA3', 'NA4', 'NA5', 'NA6', 'UR'),
+      col_types =
+        paste0(
+          'cccccDDniiiiiiiiiiii',
+          'iiiiiiiiiiiiiiiiiiii',
+          'iiiiiiiiiiiic'
+        )
+    )
+  } else if (dataset == 'hads') {
+    data = googlesheets4::range_read(
+      ss = chchpd_env$clinical_file_id,
+      sheet = 'HADS',
+      na = c('NA', 'NA1', 'NA2', 'NA3', 'NA4', 'NA5', 'NA6'),
+      col_types = 'ccDiiiiiiiiiiiiiiiii'
+    ) %>%
+      dplyr::select(-Anxiety_total,-Depression_total) # don't include the
+    # totals columns, as they don't deal well with missing values and we
+    # calculate them afresh anyway
+
+  } else if (dataset == 'meds') {
+    data = googlesheets4::range_read(
+      ss = chchpd_env$clinical_file_id,
+      sheet = 'Medication',
+      na = c('NA', 'NA1', 'NA2', 'NA3', 'NA4', 'NA5', 'NA6'),
+      col_types = 'ccccDcnnnnnnnnnnnnnnnnnnnnnnncc'
+    )
+
+  } else if (dataset == 'np') {
+    data = googlesheets4::range_read(
+      ss = chchpd_env$redcap_neuropsyc_file_id,
+      na = 'NA',
+      col_types = paste0(
+        'ccccccDccnnccnn',
+        'nnnnnnnnnnnnnnn',
+        'nnnnnnnnnnnnnnn',
+        'nnnnnnnnnnnnnnn'
+      )
+    )
+  } else if (dataset == 'mri') {
+    data = googlesheets4::range_read(ss = chchpd_env$scan_file_id,
+                                      sheet = 'MRI_scans',
+                                      col_types = 'cccDccccccccccccccccccccc')
+  } else if (dataset == 'pet') {
+    data = googlesheets4::range_read(ss = chchpd_env$scan_file_id,
+                                     sheet = 'PET_scans',
+                                     col_types = 'ccDDcDccccccccccccccccc')
+  } else if (dataset == 'bloods') {
+    data = googlesheets4::range_read(
+      ss = chchpd_env$bloods_file_id,
+      sheet = 'data',
+      col_types = 'cccDnnnncccc'
+    )
+  } else if (dataset == 'hallucinations') {
+    data = googlesheets4::range_read(
+      ss = chchpd_env$clinical_file_id,
+      sheet = 'Hallucinations Questionnaire',
+      na = c('N/A', 'NA', 'NA1', 'NA2', 'NA3',
+             'NA4', 'NA5', 'NA6', 'UR'),
+      col_types = paste0(
+        'cccDciiiiiiiiiiiiiii',
+        'iiiiillllliiiiiiiiii',
+        'iiiiiiiiiiiiiiiiiic'
+      ),
+      # this sheet has a row above the col names:
+      skip = 1
+    )
+  }
+
+  # tidy spaces, caps etc from variable names, except to retain backwards
+  # compatibility of capitalised variable names in some datasets:
+  if ( !(dataset %in% c('mds_updrs', 'old_updrs', 'hads'))) {
+    data %<>% janitor::clean_names()
+  }
+
+  # report errors where cell contents don't match expected type for the column:
+  if (nrow(readr::problems(data)) > 0) {
+    print(readr::problems(data))
+  }
+
+  return(data)
+}
+
+# this function is called by each of the individual dataset import functions so
+# that they receive either a cached version of the data, or a freshly imported
+# version:
+import_helper = function(dataset,export_type) {
+  
+  # Change how we handle NAs and columns depending on export type
+  if (export_type == 'raw') {
+    na = character()
+    col_types = readr::cols(.default = "c")
+  }
+  else {
+    na = c('na', 'NA', 'NA1', 'NA2', 'NA3', 'NA4',
+           'NA5', 'NA6', 'UR', 'N/A')
+    col_types = NULL
+  }
+  
+  cache_opts = get_chchpd_options()
+
+  sheet_modified_time = get_googlesheet_modifiedtime(dataset)
+
+  use_cached = cache_opts$use_cached &&
+    !(is.null(names(chchpd_env$cached))) &&
+    (dataset %in% names(chchpd_env$cached)) &&
+    (as.numeric(
+      difftime(sheet_modified_time, chchpd_env$cached[[dataset]]$cached_time,
+               units = 'sec')
+    ) < 1)
+
+  if (use_cached) {
+    return(chchpd_env$cached[[dataset]]$data)
+  } else { # import afresh from the google sheet:
+    run_silent = getOption('chchpd_suppress_warnings', default = TRUE)
+
+    print_message = TRUE
+    while( as.numeric(difftime(Sys.time(), sheet_modified_time, units = 'sec')) < 10 ){
+      if (print_message){
+        print('The specified googlesheet is updating, please wait ...')
+        print_message = FALSE
+      }
+
+      sheet_modified_time = get_googlesheet_modifiedtime(dataset)
+    }
+
+    sanity_check = FALSE
+
+    while (!sanity_check){
+
+      if (run_silent) {
+        data =
+          suppressWarnings(suppressMessages(import_helper_googlesheet(dataset)))
+      } else {
+        data = import_helper_googlesheet(dataset)
+      }
+
+      sheet_modified_time_after_download = get_googlesheet_modifiedtime(dataset)
+
+      if (as.numeric(difftime(sheet_modified_time_after_download, sheet_modified_time, units = 'sec')) < 1)
+      {
+        sanity_check = TRUE
+      } else {
+        sheet_modified_time = sheet_modified_time_after_download
+        print('Googlesheet was modified during the download. It will be downloaded again after 5 sec ... ')
+        Sys.sleep(5)
+      }
+
+    }
+
+    chchpd_env$cached[[dataset]]$data = data
+    chchpd_env$cached[[dataset]]$cached_time = sheet_modified_time
+
+    return(data)
+  }
+}
+
+# A routine to identify modification time of a googlesheet.
+get_googlesheet_modifiedtime = function(dataset) {
+  dataset = tolower(dataset) # label of spreadsheet to import (e.g. HADS)
+
+  if (dataset == 'session_code_map') {
+    file_id = chchpd_env$subj_session_map_file_id
+  } else if (dataset == 'participants') {
+    file_id = chchpd_env$participant_file_id
+  } else if (dataset == 'sessions') {
+    file_id = chchpd_env$session_file_id
+  } else if (dataset == 'mds_updrs') {
+    file_id = chchpd_env$clinical_file_id
+  } else if (dataset == 'old_updrs') {
+    file_id = chchpd_env$clinical_file_id
+  } else if (dataset == 'hads') {
+    file_id = chchpd_env$clinical_file_id
+  } else if (dataset == 'meds') {
+    file_id = chchpd_env$clinical_file_id
+  } else if (dataset == 'np') {
+    file_id = chchpd_env$redcap_neuropsyc_file_id
+  } else if (dataset == 'mri') {
+    file_id = chchpd_env$scan_file_id
+  } else if (dataset == 'pet') {
+    file_id = chchpd_env$scan_file_id
+  } else if (dataset == 'bloods') {
+    file_id = chchpd_env$bloods_file_id
+  } else if (dataset == 'hallucinations') {
+    file_id = chchpd_env$clinical_file_id
+  }
+
+  modified_time = googledrive::drive_get(id = file_id) %>%
+    dplyr::mutate(modified = lubridate::as_datetime(purrr::map_chr(drive_resource, "modifiedTime"))) %>%
+    dplyr::select(modified)
+
+  return(modified_time$modified)
+}
+
+
 #' Allow Google Drive authorisation via a server
 #'
 #' \code{google_authenticate} To access data on a Google drive requires that the
-#' user is authenticated. This will happen automatically if required when using
-#' any of the \code{import_} functions in this package. The standard
-#' browser-based authorisation process will not work, however, when running
-#' RStudio via a server (because the IP addresses of the user's computer and the
-#' server do not match). This function allows authorisation to proceed for
-#' server-based users.
+#' user is authenticated, to ensure that you are entitled to view it.
 #'
-#' If using RStudio on a server, then you should run this function before
-#' attempting to import any datasets from the Google drive. This will institute
-#' a different authentication process. You will still be taken to a webpage,
-#' but instead of authenticating within that page, you will be given a string
-#' of characters to copy. You must then paste that into the RStudio console
-#' (there should be a prompt there expecting this input). This will generate
-#' an authentication token that will be stored on your folder on the server.
-#' Be aware that this token (in the \code{.httr-oauth} file) could allow any
-#' user to access your files and privileges on the Google drive. Do not
-#' transmit or distribute it, or allow it to be included in version control
-#' (this also applies if this file is created in a local folder when
-#' running RStudio on your own computer).
+#' If using RStudio on a server, specifying `use_server = TRUE` will institute
+#' a different authentication process to when you are running locally.
+#'
+#' @param email Allows you to nominate a particular nzbri.org e-mail address to
+#' use for authentication. This can save you having to specify it manually each
+#' time the script is run, but shouldn't be used in reproducible workflows
+#' (where other users have to be able to run the code). The default value of
+#' `TRUE` means that if authentication has occurred before, and there is just
+#' one e-mail address available to select, it will automatically do that.
 #'
 #' @param use_server If \code{TRUE}, use the copy/paste authentication process.
 #' If \code{FALSE}, use fully browser-contained authentication.
 #'
-#' The ability to specify \code{use_server = FALSE} is provided for completeness
-#' but shouldn't be necessary in most cases (maybe your script is set up to run
-#' either locally or on the server, and this would allow the authentication
-#' method to be specified conditionally).
-#'
 #' @return No return value: the function initiates a process which results in
 #' the writing of a \code{.httr-oauth} token file to disk.
 #' @export
-google_authenticate <- function(use_server = TRUE) {
-  options(httr_oob_default = use_server)
-  googlesheets::gs_auth()
+google_authenticate <- function(email = TRUE,
+                                use_server = FALSE) {
+  googlesheets4::gs4_auth(email = email,
+                             use_oob = use_server)
+
+  googledrive::drive_auth(email = email,
+                          use_oob = use_server)
 }
 
 #' Import participant demographics
@@ -68,14 +314,7 @@ import_participants <- function(anon_id = FALSE, identifiers = FALSE) {
 
   # import a file that is regularly exported via a cron job
   # from the Alice database:
-  participants = googlesheets::gs_title(chchpd_env$participant_filename) %>%
-    googlesheets::gs_read(na = c('NA', 'None')) %>%
-    janitor::clean_names()
-
-  # report errors where cell contents don't match expected type for the column:
-  if (nrow(readr::problems(participants)) > 0) {
-    print(readr::problems(participants))
-  }
+  participants = import_helper('participants')
 
   participants %<>%
     dplyr::rename(participant_status = status,
@@ -96,12 +335,12 @@ import_participants <- function(anon_id = FALSE, identifiers = FALSE) {
     # use the age from the session table (i.e. age at which the data was
     # gathered):
     dplyr::mutate(age_today =
-                    round(difftime(lubridate::today(), birth_date,
-                                   units = 'days')/365.25,
+                    round(lubridate::interval(birth_date, lubridate::today())/
+                            lubridate::years(1),
                           digits = 1)) %>%
     dplyr::mutate(age_at_death =
-                    round(difftime(date_of_death, birth_date,
-                                   units = 'days')/365.25,
+                    round(lubridate::interval(birth_date, date_of_death)/
+                            lubridate::years(1),
                           digits = 1))
 
   if (anon_id) { # return only anonymous id and no identifiers:
@@ -130,7 +369,6 @@ import_participants <- function(anon_id = FALSE, identifiers = FALSE) {
   }
 
   tabulate_duplicates(participants, 'subject_id')
-
   return(participants)
 }
 
@@ -150,7 +388,16 @@ import_participants <- function(anon_id = FALSE, identifiers = FALSE) {
 #'   \code{c('Follow-up', 'PD DNA')}.
 #'
 #' @param exclude If \code{TRUE}, don't return sessions that have been excluded
-#'   from a given study.
+#'   from a given study. For safety, we default to \code{TRUE} so that you don't
+#'   get junk data unless you explicitly ask for it. You might set this to
+#'   \code{FALSE} in order to get all records if you need to document
+#'   exclusions, for example to create a participant recruitment and exclusion
+#'   flowchart.
+#'
+#' @param print_exclude_summary If \code{TRUE}, print a table that lists
+#'   the number of records that are excluded from each study. If this looks
+#'   problematic, you could set \code{exclude = FALSE} to import all records to
+#'   identify which ones were excluded.
 #'
 #' @return A dataframe containing the session-group-study data.
 #'
@@ -159,13 +406,11 @@ import_participants <- function(anon_id = FALSE, identifiers = FALSE) {
 #' sessions = import_sessions()
 #' }
 #' @export
-import_sessions <- function(from_study = NULL, exclude = TRUE) {
+import_sessions <- function(from_study = NULL, exclude = TRUE, print_exclude_summary = TRUE) {
 
   # import a file that is regularly exported via a cron job
   # from the Alice database:
-  sessions = googlesheets::gs_title(chchpd_env$session_filename) %>%
-    googlesheets::gs_read() %>%
-    janitor::clean_names() %>%
+  sessions = import_helper('sessions') %>%
     # extract session suffix (e.g. F2, D0), useful for some purposes:
     dplyr::mutate(session_suffix =
                     stringr::str_match(session_id, '_(.*)')[,2]) %>%
@@ -180,11 +425,26 @@ import_sessions <- function(from_study = NULL, exclude = TRUE) {
                                 remove_double_measures = FALSE)
 
   if (exclude) {
+    excluded_session <- sessions %>%
+      dplyr::filter(!is.na(study_excluded) & study_excluded == TRUE)
+
+    if (print_exclude_summary & nrow(excluded_session) > 0){
+      cat('Excluded cases:')
+      exclusion_summary = excluded_session %>%
+        dplyr::ungroup() %>%
+        dplyr::group_by(study) %>%
+        dplyr::summarise(`Excluded sessions` = dplyr::n())
+
+
+      print(knitr::kable(exclusion_summary, caption = 'Automatically excluded sessions.', align = 'l'))
+    }
+
     sessions %<>% dplyr::filter(is.na(study_excluded) | study_excluded != TRUE)
   }
 
   # Updated to filter multiple studies at once.
-  if (assertthat::not_empty(from_study) && all(sapply(from_study, assertthat::is.string))) {
+  if (assertthat::not_empty(from_study) &&
+      all(sapply(from_study, assertthat::is.string))) {
     sessions %<>% dplyr::filter(study %in% from_study)
   }
 
@@ -203,7 +463,7 @@ import_sessions <- function(from_study = NULL, exclude = TRUE) {
   sessions %<>%
     dplyr::left_join(DOBs, by = 'subject_id') %>%
     dplyr::mutate(age = as.numeric(round(difftime(session_date, birth_date,
-                                       units = 'days')/365.25, digits = 1))) %>%
+                                                  units = 'days')/365.25, digits = 1))) %>%
     dplyr::select(session_id:session_date, age, study_group:mri_scan_no) %>%
     dplyr::group_by(subject_id) %>%
     dplyr::arrange(subject_id, session_date) %>%
@@ -268,7 +528,7 @@ import_motor_scores <- function() {
     dplyr::group_by(session_id) %>%
     dplyr::arrange(desc(UPDRS_date)) %>%
     # count duplicates within a session:
-    dplyr::mutate(n = row_number()) %>% # n==1 will be the lastest one
+    dplyr::mutate(n = dplyr::row_number()) %>% # n==1 will be the latest one
     dplyr::filter(n == 1) %>% # remove all but last record
     dplyr::select(-n, -UPDRS_date) # drop the temporary counter
 
@@ -291,19 +551,10 @@ import_motor_scores <- function() {
 #' full_mds_updrs = import_MDS_UPDRS(concise = FALSE)
 #' }
 #' @export
-import_MDS_UPDRS <- function(concise = TRUE,raw_export=FALSE) {
-  # get a handle to the clinical spreadsheet:
-  clinical_ss = googlesheets::gs_title(chchpd_env$clinical_filename)
 
-  MDS_UPDRS = googlesheets::gs_read(ss = clinical_ss,
-                                    ws = 'MDS_UPDRS',
-                                    na = c('na', 'NA', 'NA1', 'NA2', 'NA3',
-                                           'NA4', 'NA5', 'NA6', 'UR')) %>%
-    # safely convert some columns to numeric:
-    dplyr::mutate(H_Y = as.numeric(H_Y)) %>%
-    dplyr::mutate_each(dplyr::funs(as.numeric), dplyr::starts_with('Q')) %>%
-    dplyr::mutate_each(dplyr::funs(as.numeric),
-                       dplyr::starts_with('Part_', ignore.case = FALSE)) %>%
+import_MDS_UPDRS <- function(concise = TRUE,export_type='simple') {
+  MDS_UPDRS = import_helper('mds_updrs',export_type) %>%
+
     # we have some columns to explicitly record whether values are known to be
     # missing (vs perhaps just not having been entered yet). Make boolean:
     dplyr::mutate(H_Y_missing      = (H_Y_missing == 'Y'),
@@ -317,7 +568,6 @@ import_MDS_UPDRS <- function(concise = TRUE,raw_export=FALSE) {
   # than literal numbered ranges
   # e.g. Q1_1 to Q1_13 instead of [6:18] for Part I, to make things less
   # brittle if columns are added to the source spreadsheet.
-
   Q1_1_i  = which(colnames(MDS_UPDRS) == 'Q1_1')
   Q1_13_i = which(colnames(MDS_UPDRS) == 'Q1_13')
   Q2_1_i  = which(colnames(MDS_UPDRS) == 'Q2_1')
@@ -344,7 +594,7 @@ import_MDS_UPDRS <- function(concise = TRUE,raw_export=FALSE) {
 
   # drop records where both H&Y and Part III are missing:
   MDS_UPDRS %<>%
-    dplyr::filter(!is.na(H_Y) & !is.na(part_III_missing)) %>%
+    dplyr::filter(!(is.na(H_Y) & is.na(part_III_missing))) %>%
     dplyr::select(-H_Y_missing, -part_III_missing)
 
   if (concise == TRUE) { # return only summary measures
@@ -372,12 +622,8 @@ import_MDS_UPDRS <- function(concise = TRUE,raw_export=FALSE) {
 #' part_III = import_motor_scores()
 #' }
 #' @export
-import_old_UPDRS <- function() {
-  # get a handle to the clinical spreadsheet:
-  clinical_ss = googlesheets::gs_title(chchpd_env$clinical_filename)
-
-  old_UPDRS = googlesheets::gs_read(ss = clinical_ss,
-                                    ws = 'Old_UPDRS') %>%
+import_old_UPDRS <- function(export_type='simple') {
+  old_UPDRS = import_helper('old_updrs',export_type) %>%
     # remove 2nd sessions from Charlotte Graham's amantadine follow-up study,
     # where there wasn't a full NP session done, as the session was only a few
     # months after the baseline session:
@@ -442,28 +688,8 @@ import_old_UPDRS <- function() {
 #' hads = import_HADS()
 #' }
 #' @export
-import_HADS <- function(concise = TRUE) {
-  # get a handle to the clinical spreadsheet:
-  clinical_ss = googlesheets::gs_title(chchpd_env$clinical_filename)
-
-  HADS = googlesheets::gs_read(ss = clinical_ss,
-                               ws = 'HADS',
-                               col_types = readr::cols(subject_id =
-                                                         readr::col_character(),
-                                                       session_suffix =
-                                                         readr::col_character(),
-                                                HADS_date = readr::col_date(),
-                                                .default = readr::col_integer()),# the item scores
-                               na = c('NA', 'NA1', 'NA2', 'NA3', 'NA4', 'NA5',
-                                      'NA6'),
-                               range = googlesheets::cell_cols('A:Q')) # don't
-  # include the totals columns, as they don't deal well with missing values and
-  # we calculate them afresh below anyway.
-
-  # report errors where cell contents don't match expected type for the column:
-  if (nrow(readr::problems(HADS)) > 0) {
-    print(kable(readr::problems(HADS)))
-  }
+import_HADS <- function(concise = TRUE,export_type='simple') {
+  HADS = import_helper('hads',export_type)
 
   HADS %<>% map_to_universal_session_id()
 
@@ -498,26 +724,9 @@ import_HADS <- function(concise = TRUE) {
 #' meds = import_medications()
 #' }
 #' @export
-import_medications <- function(concise = TRUE) {
-  # get a handle to the clinical spreadsheet:
-  clinical_ss = googlesheets::gs_title(chchpd_env$clinical_filename)
-
+import_medications <- function(concise = TRUE,export_type='simple') {
   # Medications list:
-  meds = googlesheets::gs_read(ss = clinical_ss,
-                               ws = 'Medication',
-                               na = c('NA', 'NA1', 'NA2', 'NA3', 'NA4',
-                                      'NA5', 'NA6'))
-
-  # report errors where cell contents don't match expected type for the column:
-  if (nrow(readr::problems(meds)) > 0) {
-    print(readr::problems(meds))
-  }
-
-  meds %<>%
-    # alter format of some columns:
-    dplyr::mutate(apomorphine = as.numeric(apomorphine),
-                  duodopa = as.numeric(duodopa),
-                  cr_tolcapone = as.numeric(cr_tolcapone)) %>%
+  meds = import_helper('meds',export_type) %>%
     map_to_universal_session_id()
 
   ## calculate levodopa equivalent dose (LED)
@@ -525,7 +734,7 @@ import_medications <- function(concise = TRUE) {
   # each type of medication (mg/day).
 
   # replace all NAs with 0 in the medication dose columns (from 6 onwards):
-  meds[6:ncol(meds)][is.na(meds[6:ncol(meds)])] <- 0
+  meds[6:(ncol(meds)-2)][is.na(meds[6:(ncol(meds)-2)])] <- 0
 
   ## calculate the LED subtotal for each type of medication.
   # total immediate release l-dopa - combination of sinemet, madopar, sindopa,
@@ -593,7 +802,7 @@ import_medications <- function(concise = TRUE) {
     dplyr::group_by(session_id) %>%
     dplyr::arrange(desc(med_date)) %>%
     # count duplicates within a session:
-    dplyr::mutate(n = row_number()) %>% # n==1 will be the latest one
+    dplyr::mutate(n = dplyr::row_number()) %>% # n==1 will be the latest one
     dplyr::filter(n == 1) %>% # remove all but last record
     dplyr::select(-n) # drop the temporary counter
 
@@ -622,20 +831,9 @@ import_medications <- function(concise = TRUE) {
 #' np = import_neuropsyc()
 #' }
 #' @export
-import_neuropsyc <- function(concise = TRUE, exclude = TRUE) {
-  # get a handle to the neuropsyc spreadsheet:
-  neuropsyc_ss = googlesheets::gs_title(chchpd_env$redcap_neuropsyc_filename)
 
-  np = googlesheets::gs_read(ss = neuropsyc_ss,
-                             na = 'NA')
-
-  # report errors where cell contents don't match expected type for the column:
-  if (nrow(readr::problems(np)) > 0) {
-    print(readr::problems(np))
-  }
-
-  np %<>%
-    janitor::clean_names() # remove spaces from variable names, etc
+import_neuropsyc <- function(concise = TRUE) {
+  np = import_helper('np')
 
   np %<>% # name selected variables neatly
     dplyr::rename(session_date = np1_date,
@@ -706,149 +904,22 @@ import_neuropsyc <- function(concise = TRUE, exclude = TRUE) {
   return(np)
 }
 
-#' Import (old) neuropsyc data.
-#'
-#' \code{import_neuropsyc} Return various test results from the OLD neuropsyc
-#' spreadsheet. This should no longer be used, as it refers only to an outdated
-#' data source. The new \code{import_neuropsyc()} function imports data from a
-#' sheet which is regularly exported from the REDCap database.
-#'
-#' @param concise If \code{TRUE}, return only the selected variables (e.g. MoCA,
-#'   global z, domain z). If \code{FALSE}, also return all individual test
-#'   scores, allowing more detailed analyses.
-#'
-#' @return A dataframe containing neuropsyc scores.
-#'
-#' @examples
-#' \dontrun{
-#' np = import_neuropsyc()
-#' }
-#' @export
-DEPRECATED_import_neuropsyc <- function(concise = TRUE) {
-  # get a handle to the neuropsyc spreadsheet:
-  neuropsyc_ss = googlesheets::gs_title(chchpd_env$neuropsyc_filename)
-
-    np = googlesheets::gs_read(ss = neuropsyc_ss,
-                               ws = 'All Data',
-                               na = c('na', 'NA', 'NA1', 'NA2', 'NA3', 'NA4',
-                                      'NA5', 'NA6', '#DIV/0!'))
-
-  # report errors where cell contents don't match expected type for the column:
-  if (nrow(readr::problems(np)) > 0) {
-    print(readr::problems(np))
-  }
-
-  np %<>%
-    janitor::clean_names() %>% # remove spaces from variable names, etc
-    # remove empty rows:
-    dplyr::filter(subject_id != '') %>%
-    # tidy up errors in subject ids and session suffixes in source data:
-    map_to_universal_session_id(remove_double_measures = TRUE)
-
-  # extract the subject id and session date from the standardised
-  # session id:
-  np %<>%
-    tidyr::separate(col = session_id, into = c('subject_id', 'session_date'),
-                    sep = '_', remove = FALSE)
-
-  # remove excluded assessments
-  if (exclude == TRUE) {
-    np %<>%
-      dplyr::filter(excluded_y_n != 'Y')
-  }  
-
-  # drop variables to make the data easier to manage:
-  if (concise == TRUE) { # return only summary measures
-    np %<>%
-    dplyr::select(subject_id, session_id, excluded_y_n, session_date,
-                  full_or_short_assessment, checked, pd_control,
-                  nzbri_criteria, mo_ca, wtar_predicted_wais_iii_fsiq,
-                  total_all_domains, npi_sleep, attention_total,
-                  executive_function_total, visuo_total, learning_memory_total,
-                  language_total)
-    } else { # return most columns, for more detailed analysis
-      np %<>%
-        dplyr::select(subject_id, session_id, excluded_y_n, session_date,
-                      full_or_short_assessment, checked, pd_control, timeline,
-                      nzbri_criteria, mo_ca,
-                      wtar_predicted_wais_iii_fsiq,
-                      adas_cog_70:version) # most indic tests are here
-    }
-
-  np %<>% # name selected variables neatly
-    dplyr::rename(excluded_np = excluded_y_n,
-                  full_assessment = full_or_short_assessment,
-                  np_group = pd_control,
-                  cognitive_status = nzbri_criteria,
-                  MoCA = mo_ca,
-                  WTAR = wtar_predicted_wais_iii_fsiq,
-                  global_z = total_all_domains,
-                  attention_domain = attention_total,
-                  executive_domain = executive_function_total,
-                  visuo_domain = visuo_total,
-                  learning_memory_domain = learning_memory_total,
-                  language_domain = language_total)
-
-  # do some tidying:
-  np %<>%
-    # label some factors neatly:
-    dplyr::mutate(
-      cognitive_status = factor(cognitive_status,
-                                levels = c('U', 'MCI', 'PDD'),
-                                labels = c('N', 'MCI', 'D'),
-                                ordered = TRUE),
-      session_date = lubridate::ymd(session_date), # convert from char to date
-      # make the 'short assessment' column boolean:
-      full_assessment =
-        dplyr::if_else(full_assessment == 'Short', FALSE, TRUE, TRUE)) %>%
-    # associate a cognitive status with short assessment sessions. We assign a
-    # status here, simply by going back to the next full assessment.
-    # carry forward the status values, to fill in blank cells:
-    dplyr::group_by(subject_id) %>%
-    dplyr::arrange(session_date) %>%
-    tidyr::fill(cognitive_status) %>% # fill = 'last observation carried forward'
-    dplyr::ungroup()
-
-  # make a single diagnosis column
-  np %<>%
-    tidyr::unite(col = diagnosis,
-                 np_group, cognitive_status, remove = FALSE) %>%
-    dplyr::mutate(diagnosis =
-                    factor(diagnosis, levels =
-                             c('Control_N',  'Control_MCI', 'Control_NA',
-                               'PD_N', 'PD_MCI', 'PD_D', 'PD_NA'),
-                           labels =
-                             c('Control',  'Control-MCI', 'Control unknown',
-                               'PD-N', 'PD-MCI', 'PDD', 'PD unknown')))
-
-  np %<>%
-    # filter out scheduled future visits (i.e booked but no data yet):
-    dplyr::filter(session_date < lubridate::today()) %>%
-    dplyr::arrange(subject_id, session_date) %>%
-    dplyr::group_by(subject_id) %>% # within each subject
-    # get the baseline values of some variables:
-    dplyr::mutate(date_baseline = dplyr::first(session_date),
-                  global_z_baseline = dplyr::first(global_z),
-                  diagnosis_baseline = dplyr::first(diagnosis),
-                  session_number = dplyr::row_number(),
-                  years_from_baseline =
-                    as.numeric(round(difftime(session_date, date_baseline,
-                                              units = 'days')/365.25,
-                                     digits = 2)),
-                  # Find longest followup time:
-                  FU_latest = max(years_from_baseline)) %>%
-    dplyr::ungroup() %>% # leaving it grouped can cause issues later
-    dplyr::select(session_id:excluded_np, session_number, years_from_baseline,
-                  np_group, diagnosis_baseline, cognitive_status, diagnosis,
-                  dplyr::everything(), -session_date, -subject_id)
-
-  return(np)
-}
 
 #' Import metadata on MRI scans
 #'
 #' \code{import_MRI} accesses the scan number and associated information
 #'  from each MRI scanning session.
+#'
+#' @param exclude If \code{TRUE}, don't return sessions that have been marked as
+#'   excluded. For safety, we default to \code{TRUE} so that you don't get junk
+#'   data unless you explicitly ask for it. You might set this to \code{FALSE}
+#'   in order to get all records if you need to document exclusions, for example
+#'  to create a participant recruitment and exclusion flowchart.
+#'
+#' @param print_exclude_summary If \code{TRUE}, print a table that lists
+#'   the number of records that have been excluded. If this looks problematic,
+#'   you could set \code{exclude = FALSE} to import all records to identify
+#'   which ones were excluded.
 #'
 #' @param exclude If \code{TRUE}, don't return records marked as excluded.
 #'
@@ -859,22 +930,29 @@ DEPRECATED_import_neuropsyc <- function(concise = TRUE) {
 #' mri = import_MRI()
 #' }
 #' @export
-import_MRI <- function(exclude = TRUE) {
+import_MRI <- function(exclude = TRUE, print_exclude_summary = TRUE,export_type='simple') {
   # Import data on MRI scans
 
   # Need a handle to the scan numbers Google sheet.
   # Access the spreadsheet by its title.
   # This requires an initial authentication in the browser:
-  scan_ss = googlesheets::gs_title(chchpd_env$scan_filename)
-
-  MRI = googlesheets::gs_read(ss = scan_ss,
-                              ws = 'MRI_scans') %>%
-    janitor::clean_names() %>%
+  MRI = import_helper('mri',export_type) %>%
     dplyr::rename(mri_excluded = excluded) %>%
     # tidy manual data entry errors of session IDs:
     dplyr::mutate(subject_id = sanitise_session_ids(subject_id))
 
   if (exclude) {
+    excluded_MRI = MRI %>%
+      dplyr::filter(!is.na(mri_excluded) & mri_excluded != 'Included')
+
+    if (print_exclude_summary & nrow(excluded_MRI)>0){
+      cat('Excluded cases:')
+      excluded_MRI %>%
+        dplyr::select(subject_id, scan_number, scan_date) %>%
+        knitr::kable(caption = 'Automatically excluded MRI scans.') %>%
+        print()
+    }
+
     MRI %<>%
       dplyr::filter(is.na(mri_excluded) | mri_excluded == 'Included') %>%
       dplyr::select(-mri_excluded, -study)
@@ -898,17 +976,13 @@ import_MRI <- function(exclude = TRUE) {
 #' pet = import_PET_scan_numbers()
 #' }
 #' @export
-import_PET <- function(exclude = TRUE) {
+import_PET <- function(exclude = TRUE,export_type='simple') {
   # Need a handle to the scan numbers Google sheet.
   # Access the spreadsheet by its title.
   # This requires an initial authentication in the browser:
-  scan_ss = googlesheets::gs_title(chchpd_env$scan_filename)
-
-  PET = googlesheets::gs_read(ss = scan_ss,
-                              ws = 'PET_scans') %>%
+  PET = import_helper('pet',export_type) %>%
     # tidy manual data entry errors of session IDs:
-    dplyr::mutate(subject_id = sanitise_session_ids(subject_id)) %>%
-    janitor::clean_names()
+    dplyr::mutate(subject_id = sanitise_session_ids(subject_id))
 
   # choose whether to filter out excluded records before they get to the user:
   if (exclude) {
@@ -920,10 +994,10 @@ import_PET <- function(exclude = TRUE) {
   # drop unneeded variables and give some unique names:
   PET %<>% dplyr::select(-do_not_use_group) %>%
     dplyr::rename(pet_np1_date = np1_date,
-                   pet_mri_date = mri_date,
-                   pet_mri_scan = mri_scan,
-                   pet_dose = dose,
-                   pet_notes = notes)
+                  pet_mri_date = mri_date,
+                  pet_mri_scan = mri_scan,
+                  pet_dose = dose,
+                  pet_notes = notes)
 
   return(PET)
 }
@@ -942,20 +1016,11 @@ import_PET <- function(exclude = TRUE) {
 #' bloods = import_bloods()
 #' }
 #' @export
-import_bloods <- function() {
+import_bloods <- function(export_type='simple') {
   # Need a handle to the bloods Google sheet.
   # Access the spreadsheet by its title.
   # This requires an initial authentication in the browser:
-  bloods_ss = googlesheets::gs_title(chchpd_env$bloods_filename)
-
-  bloods =
-    googlesheets::gs_read(ss = bloods_ss,
-                          ws = 'data',
-                          col_types =
-                            readr::cols(height_m = readr::col_number(),
-                                        weight_kg = readr::col_number(),
-                                        creatinine_umol_l = readr::col_number(),
-                                        urate_mmol_l = readr::col_number())) %>%
+  bloods = import_helper('bloods',export_type) %>%
     # drop records which are scheduled but have not yet occurred:
     dplyr::filter(!is.na(date_collected)) %>%
     # tidy any manual data entry errors of session IDs:
@@ -987,29 +1052,10 @@ import_bloods <- function() {
 #' hallucinations = import_hallucinations()
 #' }
 #' @export
+
 import_hallucinations <- function(export_type='simple') {
-  # get a handle to the clinical spreadsheet:
-  clinical_ss = googlesheets::gs_title(chchpd_env$clinical_filename)
-  
-  # Change how we handle NAs and columns depending on export type
-  if (export_type == 'raw') {
-    na = character()
-    col_types = readr::cols(.default = "c")
-  }
-  else {
-    na = c('na', 'NA', 'NA1', 'NA2', 'NA3', 'NA4',
-           'NA5', 'NA6', 'UR', 'N/A')
-    col_types = NULL
-  }
-  
-  hallucinations =
-    googlesheets::gs_read(ss = clinical_ss,
-                          ws = 'Hallucinations Questionnaire',
-                          na = na,
-                          col_types=col_types,
-                          # this sheet has a row above the column names:
-                          skip = 1) %>%
-    janitor::clean_names() %>% # remove spaces from variable names, etc
+  hallucinations = import_helper('hallucinations',export_type=export_type) %>%
+
     dplyr::mutate(hallucinations_date = lubridate::ymd(hallucinations_date)) %>%
     # for some reason, we get lots of blanks rows:
     dplyr::filter(!subject_id == '') %>%
