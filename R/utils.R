@@ -11,9 +11,9 @@
 #' output_graph(p) # p is a ggplot object
 #' }
 #' @export
-output_graph = function(graph){
+output_graph <- function(graph){
   # find out if this document is HTML or PDF:
-  outputFormat = opts_knit$get("rmarkdown.pandoc.to")
+  outputFormat <- opts_knit$get("rmarkdown.pandoc.to")
 
   # is NULL at command prompt when not actually knitting a document:
   if (is.null(outputFormat)) {
@@ -34,15 +34,15 @@ output_graph = function(graph){
 #' clear_chchpd_cache()
 #' }
 #' @export
-clear_chchpd_cache = function(){
-  chchpd_env$cached = list() # reset cached data
+clear_chchpd_cache <- function(){
+  chchpd_env$cached <- list() # reset cached data
 }
 
 
 
-output_graph2 = function(graph){
+output_graph2 <- function(graph){
   # find out if this document is HTML or PDF:
-  outputFormat = opts_knit$get("rmarkdown.pandoc.to")
+  outputFormat <- opts_knit$get("rmarkdown.pandoc.to")
 
   if (is.null(outputFormat))
   {# must be being done at the command prompt, i.e. not being knitted

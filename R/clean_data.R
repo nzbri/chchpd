@@ -28,7 +28,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' some_data = map_to_universal_session_id(some_data)
+#' some_data <- map_to_universal_session_id(some_data)
 #' }
 #' @export
 map_to_universal_session_id <- function(dataset,
@@ -38,7 +38,7 @@ map_to_universal_session_id <- function(dataset,
 
   # import the lookup table from a file that is regularly exported via
   # a cron job from the Alice database:
-  session_code_map = import_helper('session_code_map') %>%
+  session_code_map <- import_helper('session_code_map') %>%
     dplyr::rename(session_suffix = session_id) %>%
     tidyr::unite(col = input_id, subject_id, session_suffix,
                  sep = '_', remove = TRUE) %>%
@@ -56,7 +56,7 @@ map_to_universal_session_id <- function(dataset,
   }
 
   # first identify records that won't match:
-  unmatched = dplyr::anti_join(dataset, session_code_map,
+  unmatched <- dplyr::anti_join(dataset, session_code_map,
                                by = c('session_label' = 'input_id'))
 
   # now match, by looking up the session label from the given dataset, mapping
@@ -113,11 +113,11 @@ map_to_universal_session_id <- function(dataset,
 #'
 #' @examples
 #' \dontrun{
-#' duplicate_bloods = tabulate_duplicates(bloods, 'subject_id')
+#' duplicate_bloods <- tabulate_duplicates(bloods, 'subject_id')
 #' }
 #' @export
 tabulate_duplicates <- function(df, varname, print_results = FALSE) {
-  duplicates = df %>%
+  duplicates <- df %>%
     dplyr::group_by(  .data[[varname]] ) %>% # works programatically
     dplyr::summarise(n = dplyr::n()) %>%
     dplyr::filter(n > 1) %>%
