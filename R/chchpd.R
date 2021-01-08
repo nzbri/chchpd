@@ -29,45 +29,57 @@ NULL # needed just so that roxygen will process the statements above.
 
 # Create a local environment to keep filenames. Better than using the global
 # environment which would be affected by rm() function.
-chchpd_env = new.env(emptyenv())
+chchpd_env <- new.env(emptyenv())
 
 # store references to the Google sheets which contain the data:
-chchpd_env$participant_file_id = # ParticipantExport spreadsheet:
+chchpd_env$participant_file_id <- # ParticipantExport spreadsheet:
   '1WmeDr5WbUzl2uA1wMlZTJdcn_F-q-nWMEmlCKjSFInk'
 
-chchpd_env$session_file_id = # SessionExport spreadsheet:
+chchpd_env$session_file_id <- # SessionExport spreadsheet:
   '1HS_wlXRbWmGV3Db8ELuB53N6O1xVSmWJqlJ0AhyaMdY'
 
-chchpd_env$clinical_file_id = # PD Progression clinical data spreadsheet:
+chchpd_env$clinical_file_id <- # PD Progression clinical data spreadsheet:
   '14Jb3qC1Ioazmpacpwtlqw-myFtIjBGR9D2y6znLVIbs' # new copy
 
-chchpd_env$redcap_neuropsyc_file_id = # RedcapExport spreadsheet:
+chchpd_env$redcap_neuropsyc_file_id <- # RedcapExport spreadsheet:
   '1liI06efJe1mRI3Iz2lWwq_PeZDpZLnIhhjqyN1SQlX0'
 
-chchpd_env$scan_file_id = # PD Scan numbers spreadsheet:
+chchpd_env$scan_file_id <- # PD Scan numbers spreadsheet:
   '1NVlN6GrzXuyP4u37iuO2NAfORJxC8bmaBWIZpPoyrR4'
 
-chchpd_env$subj_session_map_file_id = # SubjectSessionMapping spreadsheet:
+chchpd_env$subj_session_map_file_id <- # SubjectSessionMapping spreadsheet:
   '1JAmxvXPU0cQlQAlYiZUwCxk1oDTu_84w4ZZUYZo2VP4'
 
-chchpd_env$bloods_file_id = # PD Bloods Tracking spreadsheet:
+chchpd_env$bloods_file_id <- # PD Bloods Tracking spreadsheet:
   '191uIITl3vqJKY97M87a72BVPt5CnnEZlZJ6sch8XFEU'
 
 # as data imports are slow, allow them to be automatically cached until the source has changed:
-chchpd_env$cached = list() # store imported dataframes here by name
+chchpd_env$cached <- list() # store imported dataframes here by name
 
-# functions that run when package is attached/loaded:
+# functions that run when package is attached:
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage(paste0("Data import functions for the Christchurch ",
                                "Longitudinal Parkinson's Study. Should be run ",
                                "only by accredited researchers at NZBRI, who ",
                                "have authorised access to the data sources."))
+  invisible()
+}
 
 
+# Functions available on load (i.e., works with :: as well.)
+.onLoad <- function(libname, pkgname) {
+  
   if (is.null(getOption('chchpd_use_cached', default = NULL)))
     options(chchpd_use_cached = TRUE)
-
+  
   if (is.null(getOption('chchpd_suppress_warnings', default = NULL)))
     options(chchpd_suppress_warnings = TRUE) # Reduce warnings from googlesheets
+  
+  # Configure googledrive and googlesheets to use CHCHPD application. This 
+  # improves issues related to exhausting Google's resources.
+  # Currently, this only allows @nzbri.org email addresses to login.
+  invisible(googlesheets4::gs4_auth_configure(app = chchpd_oauth_app()))
+  invisible(googledrive::drive_auth_configure(app = chchpd_oauth_app()))
 
+  invisible()
 }
