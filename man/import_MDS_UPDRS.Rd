@@ -19,6 +19,6 @@ MDS-UPDRS individual items for each part and the Hoehn & Yahr stage.
 }
 \examples{
 \dontrun{
-full_mds_updrs = import_MDS_UPDRS(concise = FALSE)
+full_mds_updrs <- import_MDS_UPDRS(concise = FALSE)
 }
 }

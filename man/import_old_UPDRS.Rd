@@ -22,6 +22,6 @@ al. 2012. Mov Disorders, 27(10):1239-1242.
 }
 \examples{
 \dontrun{
-part_III = import_motor_scores()
+part_III <- import_motor_scores()
 }
 }

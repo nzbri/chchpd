@@ -18,6 +18,6 @@ necessary for this function.
 }
 \examples{
 \dontrun{
-bloods = import_bloods()
+bloods <- import_bloods()
 }
 }

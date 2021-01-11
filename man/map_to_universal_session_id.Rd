@@ -46,6 +46,6 @@ are linked to that session, even if they occurred some days or weeks apart.
 }
 \examples{
 \dontrun{
-some_data = map_to_universal_session_id(some_data)
+some_data <- map_to_universal_session_id(some_data)
 }
 }

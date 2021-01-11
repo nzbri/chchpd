@@ -16,6 +16,6 @@ team in Sydney.
 }
 \examples{
 \dontrun{
-hallucinations = import_hallucinations()
+hallucinations <- import_hallucinations()
 }
 }

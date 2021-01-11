@@ -19,6 +19,6 @@ necessary for this function.
 }
 \examples{
 \dontrun{
-pet = import_PET_scan_numbers()
+pet <- import_PET_scan_numbers()
 }
 }

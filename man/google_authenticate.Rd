@@ -4,7 +4,10 @@
 \alias{google_authenticate}
 \title{Allow Google Drive authorisation via a server}
 \usage{
-google_authenticate(email = TRUE, use_server = FALSE)
+google_authenticate(
+  email = chchpd_user(),
+  use_server = chchpd_check_rstudio_server()
+)
 }
 \arguments{
 \item{email}{Allows you to nominate a particular nzbri.org e-mail address to

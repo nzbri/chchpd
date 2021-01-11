@@ -22,6 +22,6 @@ necessary for this function.
 }
 \examples{
 \dontrun{
-hads = import_HADS()
+hads <- import_HADS()
 }
 }

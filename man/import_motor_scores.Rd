@@ -27,6 +27,6 @@ want access to individual items scores, use the individual functions
 }
 \examples{
 \dontrun{
-updrs = import_motor_scores()
+updrs <- import_motor_scores()
 }
 }

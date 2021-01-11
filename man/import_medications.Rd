@@ -20,6 +20,6 @@ use at the time of the assessment session.
 }
 \examples{
 \dontrun{
-meds = import_medications()
+meds <- import_medications()
 }
 }

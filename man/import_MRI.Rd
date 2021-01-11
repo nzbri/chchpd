@@ -23,6 +23,6 @@ A dataframe containing the MRI metadata.
 }
 \examples{
 \dontrun{
-mri = import_MRI()
+mri <- import_MRI()
 }
 }

@@ -13,7 +13,7 @@ from_permitted_package <- function(env = parent.frame()) {
   if (!isNamespace(env)) {
     return(FALSE)
   }
-  
+
   nm <- getNamespaceName(env)
   nm %in% c("chchpd")
 }
@@ -34,13 +34,13 @@ check_permitted_package <- function(env = parent.frame()) {
   invisible(env)
 }
 
-#' Default Google app to use with CHCHPD.
+#' Default Google app to use with chchpd:
 chchpd_oauth_app <- function() {
   check_permitted_package(parent.frame())
   coa()
 }
 
-#' Check whether the rstudio is running in server mode.
+#' Check whether RStudio is running in server mode:
 chchpd_check_rstudio_server <- function(){
   check_server <- try(rstudioapi::versionInfo()$mode == 'server', silent = TRUE)
   if(length(check_server) == 0 || is(T, 'try-error')){

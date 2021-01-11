@@ -20,6 +20,6 @@ data, as periodically exported from the REDCap database.
 }
 \examples{
 \dontrun{
-np = import_neuropsyc()
+np <- import_neuropsyc()
 }
 }

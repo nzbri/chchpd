@@ -21,6 +21,6 @@ within a specified variable in a dataframe, and their number of repetitions.
 }
 \examples{
 \dontrun{
-duplicate_bloods = tabulate_duplicates(bloods, 'subject_id')
+duplicate_bloods <- tabulate_duplicates(bloods, 'subject_id')
 }
 }

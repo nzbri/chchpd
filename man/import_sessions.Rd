@@ -43,6 +43,6 @@ This information is exported periodically from the Alice database.
 }
 \examples{
 \dontrun{
-sessions = import_sessions()
+sessions <- import_sessions()
 }
 }

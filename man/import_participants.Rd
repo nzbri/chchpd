@@ -32,6 +32,6 @@ This information is exported periodically from the Alice database.
 }
 \examples{
 \dontrun{
-participants = import_participants()
+participants <- import_participants()
 }
 }
