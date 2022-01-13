@@ -850,7 +850,7 @@ import_medications <- function(concise = TRUE) {
 #' @return A dataframe containing neuropsyc scores. Notes for particular variables:
 #' 
 #' \describe{
-#'   \item{global_z}{A mean of all global z-scores. Is returned as NA if there
+#'   \item{global_z}{A mean of all z-scores. Is returned as NA if there
 #'      are fewer than four z-scores or if the session is marked as 
 #'      incomplete in REDCap (data not fully collected or entered).}
 #'   \item{global_z_no_language}{Similar to global_z except that z-scores from
