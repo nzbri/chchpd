@@ -1,7 +1,7 @@
 Package: chchpd
 Type: Package
 Title: Manage and Manipulate Christchurch Parkinson's Studies Data
-Version: 0.5.0
+Version: 0.5.1
 Authors@R: c(
     person('Michael', 'MacAskill', email = 'michael.macaskill@nzbri.org', 
     role = c('cre')),
@@ -35,6 +35,6 @@ Imports: assertthat,
     usethis (>= 1.6.1),
     httpuv (>= 1.5.4),
     rlang (>= 0.4.7)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Depends: 
     R (>= 4.0.2)
