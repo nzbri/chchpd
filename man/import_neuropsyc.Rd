@@ -15,12 +15,11 @@ scores, allowing more detailed analyses.}
 A dataframe containing neuropsyc scores. Notes for particular variables:
 
 \describe{
-  \item{global_z}{A mean of all global z-scores. Is returned as NA if there
+  \item{global_z}{A mean of all z-scores. Is returned as NA if there
      are fewer than four z-scores or if the session is marked as 
      incomplete in REDCap (data not fully collected or entered).}
-  \item{global_z_no_language}{Similar to global_z except that z-scores from
-     the language domain are excluded and matches the definition in some 
-     historical papers.}
+  \item{global_z_no_language}{A historical version of global_z that is the mean
+     of domain mean scores, excluding the language domain.}
   \item{n_z_scores}{The number of z_scores that have been used in calculating
      the global_z mean and cognitive status.}
   \item{mci_criteria_requirements_met}{Whether the number of test requirements
