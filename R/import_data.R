@@ -850,13 +850,19 @@ import_medications <- function(concise = TRUE) {
 #' @return A dataframe containing neuropsyc scores. Notes for particular variables:
 #' 
 #' \describe{
-#'   \item{global_z}{A mean of all z-scores. Is returned as NA if there
-#'      are fewer than four z-scores or if the session is marked as 
-#'      incomplete in REDCap (data not fully collected or entered).}
-#'   \item{global_z_no_language}{A historical version of global_z that is the mean
-#'      of domain mean scores, excluding the language domain.}
-#'   \item{n_z_scores}{The number of z_scores that have been used in calculating
-#'      the global_z mean and cognitive status.}
+#'   \item{global_z}{Default global z, equal to global_z_no_language.}
+#'   \item{global_z_no_language}{The mean of four domain mean scores, excluding 
+#'      the language domain. Requires at least one score in each of the four 
+#'      domains, otherwise returns NA. NA is also returned if the session is 
+#'      marked incomplete in REDCap (data not fully collected or entered).}
+#'   \item{global_z_with_language}{The mean of five domain mean scores. 
+#'      Requires at least one score in each of the five domains, otherwise returns 
+#'      NA. NA is also returned if the session is marked incomplete.}
+#'   \item{global_z_grand_mean}{The grand mean of all z-scores across all domains. 
+#'      Is returned as NA if there are fewer than four z-scores or if the session 
+#'      is marked as incomplete.}
+#'   \item{n_z_scores}{The number of z_scores available for calculating
+#'      the global_z scores and cognitive status.}
 #'   \item{mci_criteria_requirements_met}{Whether the number of test requirements
 #'      by domain for Level-II criteria have been met when determining the 
 #'      cognitive status.}
@@ -933,7 +939,8 @@ import_neuropsyc <- function(concise = TRUE) {
       dplyr::select(session_id, np_excluded,
                     full_assessment, n_z_scores, mci_criteria_requirements_met,
                     diagnosis, np_group, cognitive_status,
-                    MoCA, WTAR, global_z, global_z_no_language, npi,
+                    MoCA, WTAR, global_z, global_z_no_language, 
+                    global_z_with_language, global_z_grand_mean, npi,
                     attention_domain,executive_domain, visuo_domain,
                     learning_memory_domain, language_domain, date_baseline,
                     global_z_baseline, diagnosis_baseline, session_number,
