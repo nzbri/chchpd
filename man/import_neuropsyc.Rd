@@ -15,14 +15,14 @@ scores, allowing more detailed analyses.}
 A dataframe containing neuropsyc scores. Notes for particular variables:
 
 \describe{
-  \item{global_z}{Default global z, equal to global_z_no_language.}
-  \item{global_z_no_language}{The mean of four domain mean scores, excluding 
-     the language domain. Requires at least one score in each of the four 
+  \item{global_z}{The mean of all domain mean scores. 
+     Requires a minimum of four scores across a minimum of two domains, 
+     otherwise returns NA. NA is also returned if the session is marked incomplete
+     (data not fully collected or entered).}
+  \item{global_z_no_language}{The mean of the domain mean scores, excluding 
+     the language domain. Requires at least four scores over a minimum of two 
      domains, otherwise returns NA. NA is also returned if the session is 
-     marked incomplete in REDCap (data not fully collected or entered).}
-  \item{global_z_with_language}{The mean of five domain mean scores. 
-     Requires at least one score in each of the five domains, otherwise returns 
-     NA. NA is also returned if the session is marked incomplete.}
+     marked incomplete in REDCap.}
   \item{global_z_grand_mean}{The grand mean of all z-scores across all domains. 
      Is returned as NA if there are fewer than four z-scores or if the session 
      is marked as incomplete.}
