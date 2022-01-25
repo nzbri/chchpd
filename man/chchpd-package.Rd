@@ -6,11 +6,7 @@
 \alias{chchpd-package}
 \title{chchpd: Manage and Manipulate Christchurch Parkinson's Studies Data}
 \description{
-The Christchurch Parkinson's Longitudinal Study at the New Zealand 
-    Brain Research Institute (NZBRI) has gathered many pieces of data across 
-    multiple participants at one or more time points since 2007. This package 
-    allows analysts to match data from different assessment instruments and 
-    measures within subjects and across time.
+The Christchurch Parkinson's Longitudinal Study at the New Zealand Brain Research Institute (NZBRI) has gathered many pieces of data across multiple participants at one or more time points since 2007. This package allows analysts to match data from different assessment instruments and measures within subjects and across time.
 }
 \details{
 The package allows NZBRI researchers to access and combine the

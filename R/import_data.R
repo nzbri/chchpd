@@ -847,8 +847,37 @@ import_medications <- function(concise = TRUE) {
 #'   global z, domain z). If \code{FALSE}, also return all individual test
 #'   scores, allowing more detailed analyses.
 #'
-#' @return A dataframe containing neuropsyc scores.
-#'
+#' @return A dataframe containing neuropsyc scores. Notes for particular variables:
+#' 
+#' \describe{
+#'   \item{global_z}{The mean of all domain mean scores. 
+#'      Requires a minimum of four scores across a minimum of two domains, 
+#'      otherwise returns NA. NA is also returned if the session is marked incomplete
+#'      (data not fully collected or entered).}
+#'   \item{global_z_no_language}{The mean of the domain mean scores, excluding 
+#'      the language domain. Requires at least four scores over a minimum of two 
+#'      domains, otherwise returns NA. NA is also returned if the session is 
+#'      marked incomplete in REDCap.}
+#'   \item{global_z_grand_mean}{The grand mean of all z-scores across all domains. 
+#'      Is returned as NA if there are fewer than four z-scores or if the session 
+#'      is marked as incomplete.}
+#'   \item{n_z_scores}{The number of z_scores available for calculating
+#'      the global_z scores and cognitive status.}
+#'   \item{mci_criteria_requirements_met}{Whether the number of test requirements
+#'      by domain for Level-II criteria have been met when determining the 
+#'      cognitive status.}
+#'   \item{cognitive_status}{Normal-range cognition (N),  Mild cognitive 
+#'      impairment (MCI) or dementia (D). Will return NA when there are
+#'      fewer than four z-scores or the session is marked as incomplete
+#'      and doesn't have an overriding dementia diagnosis. Several of these
+#'      diagnoses don't strictly meet Level-II criteria and this can be 
+#'      checked by looking at the mci_criteria_requirements_met variable.
+#'      Depending on your analysis some of these may need to be excluded.
+#'      In some cases this is due to missing language tests from when the 
+#'      study started, in other cases it is due to a greater number of tests
+#'      not being administered (and can be examined by looking at n_z_scores).}
+#' }
+#'   
 #' @examples
 #' \dontrun{
 #' np <- import_neuropsyc()
@@ -908,8 +937,10 @@ import_neuropsyc <- function(concise = TRUE) {
   if (concise == TRUE) { # return only summary measures
     np %<>%
       dplyr::select(session_id, np_excluded,
-                    full_assessment, diagnosis, np_group, cognitive_status,
-                    MoCA, WTAR, global_z, global_z_no_language, npi,
+                    full_assessment, n_z_scores, mci_criteria_requirements_met,
+                    diagnosis, np_group, cognitive_status,
+                    MoCA, WTAR, global_z, global_z_no_language, 
+                    global_z_grand_mean, npi,
                     attention_domain,executive_domain, visuo_domain,
                     learning_memory_domain, language_domain, date_baseline,
                     global_z_baseline, diagnosis_baseline, session_number,
