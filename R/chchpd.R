@@ -14,14 +14,14 @@ NULL # needed just so that roxygen will process the statements above.
 
 
 #' @details The package allows NZBRI researchers to access and combine the
-#'   various measures collected in the Christchurch Parkinson's Progression
-#'   study. Currently these are spread across multiple sources (the Alice Django
-#'   database, multiple Google spreadsheets and .csv files, and an Access
+#'   various measures collected in the New Zealand Parkinson's Progression
+#'   (NZP3) study. Currently these are spread across multiple sources (the Alice
+#'   Django database, multiple Google spreadsheets and .csv files, and an Access
 #'   database). Shortly these should all be migrated into one REDCap database
 #'   and hence issues of data integrity should be greatly reduced. The functions
 #'   exposed in this package should serve to ease the transition, and ease the
-#'   implementation of analyses as required, without the current reliance upon
-#'   fixed file paths and access to local source files.
+#'   implementation of analyses as required, without the a reliance upon fixed
+#'   file paths and access to local source files.
 #'
 #' @keywords internal
 "_PACKAGE"
@@ -53,7 +53,8 @@ chchpd_env$subj_session_map_file_id <- # SubjectSessionMapping spreadsheet:
 chchpd_env$bloods_file_id <- # PD Bloods Tracking spreadsheet:
   '191uIITl3vqJKY97M87a72BVPt5CnnEZlZJ6sch8XFEU'
 
-# as data imports are slow, allow them to be automatically cached until the source has changed:
+# as data imports are slow, allow them to be automatically cached until the
+# source has changed:
 chchpd_env$cached <- list() # store imported dataframes here by name
 
 # functions that run when package is attached:
@@ -68,14 +69,14 @@ chchpd_env$cached <- list() # store imported dataframes here by name
 
 # Functions available on load (i.e., works with :: as well.)
 .onLoad <- function(libname, pkgname) {
-  
+
   if (is.null(getOption('chchpd_use_cached', default = NULL)))
     options(chchpd_use_cached = TRUE)
-  
+
   if (is.null(getOption('chchpd_suppress_warnings', default = NULL)))
     options(chchpd_suppress_warnings = TRUE) # Reduce warnings from googlesheets
-  
-  # Configure googledrive and googlesheets to use CHCHPD application. This 
+
+  # Configure googledrive and googlesheets to use CHCHPD application. This
   # improves issues related to exhausting Google's resources.
   # Currently, this only allows @nzbri.org email addresses to login.
   invisible(googlesheets4::gs4_auth_configure(app = chchpd_oauth_app()))

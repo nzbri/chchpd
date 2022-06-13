@@ -6,22 +6,18 @@
 \alias{chchpd-package}
 \title{chchpd: Manage and Manipulate Christchurch Parkinson's Studies Data}
 \description{
-The Christchurch Parkinson's Longitudinal Study at the New Zealand 
-    Brain Research Institute (NZBRI) has gathered many pieces of data across 
-    multiple participants at one or more time points since 2007. This package 
-    allows analysts to match data from different assessment instruments and 
-    measures within subjects and across time.
+The New Zealand Parkinson's Progression (NZP3) study at the New Zealand Brain Research Institute (NZBRI) has gathered many pieces of data across multiple participants at one or more time points since 2007. This package allows analysts to match data from different assessment instruments and measures within subjects and across time.
 }
 \details{
 The package allows NZBRI researchers to access and combine the
-  various measures collected in the Christchurch Parkinson's Progression
-  study. Currently these are spread across multiple sources (the Alice Django
-  database, multiple Google spreadsheets and .csv files, and an Access
+  various measures collected in the New Zealand Parkinson's Progression
+  (NZP3) study. Currently these are spread across multiple sources (the Alice
+  Django database, multiple Google spreadsheets and .csv files, and an Access
   database). Shortly these should all be migrated into one REDCap database
   and hence issues of data integrity should be greatly reduced. The functions
   exposed in this package should serve to ease the transition, and ease the
-  implementation of analyses as required, without the current reliance upon
-  fixed file paths and access to local source files.
+  implementation of analyses as required, without the a reliance upon fixed
+  file paths and access to local source files.
 }
 \seealso{
 Useful links:
