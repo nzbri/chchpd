@@ -4,11 +4,11 @@
 # chchpd
 
 The goal of the `chchpd` package is to allow NZBRI researchers to access
-data from the New Zealand Parkinson’s Progression (NZP^3) study. Rather
-than deal directly with data in spreadsheets or databases, functions
-like `import_participants()` and `import_motor_scores()` are provided,
-to abstract away dealing with the raw data source. Currently, these
-access data from shared online Google Sheets. Some of those are
+data from the New Zealand Parkinson’s Progression (NZP<sup>3</sup>)
+study. Rather than deal directly with data in spreadsheets or databases,
+functions like `import_participants()` and `import_motor_scores()` are
+provided, to abstract away dealing with the raw data source. Currently,
+these access data from shared online Google Sheets. Some of those are
 periodically exported from NZBRI’s Alice and REDCap Parkinson’s
 databases, while (for the time being) some contain manually-entered
 data. While the data source might change, the function used to obtain
