@@ -20,9 +20,10 @@ get_chchpd_options <- function() {
               suppress_warnings = suppress_warnings))
 }
 
-# A helper function to hack googlesheets4's default behaviour to identify column types.
-# gs_read_helper reads spreadsheets as string and uses readr package to convert types.
-# In case of google's resource limits, this function will attempt multiple times to load a spreadsheet.
+# A helper function to hack googlesheets4's default behaviour to identify column
+# types. gs_read_helper reads spreadsheets as string and uses readr package to
+# convert types. In case of Google's resource limits, this function will attempt
+# multiple times to load a spreadsheet.
 gs_read_helper <- function(ss, sheet = NULL, range = NULL, col_types = NULL, na = c('', 'NA', 'None'), ... ){
   # If the user has not authenticated, do it now.
   chchpd_has_token(ensure_token = TRUE)
@@ -1054,10 +1055,10 @@ import_bloods <- function() {
   return(bloods)
 }
 
-#' Import data from the Sydney hallucinations questionnaire.
+#' Import data from the Sydney PsycH-Q hallucinations questionnaire.
 #'
 #' \code{import_hallucinations} Get patient and significant-other ratings of
-#' hallucinations and delusions, usinf the sacle developed by Prof. Simon Lewis'
+#' hallucinations and delusions, using the scale developed by Prof. Simon Lewis'
 #' team in Sydney.
 #'
 #' @return A dataframe containing the hallucination data.
