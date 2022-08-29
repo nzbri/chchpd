@@ -26,26 +26,26 @@ get_chchpd_options <- function() {
 gs_read_helper <- function(ss, sheet = NULL, range = NULL, col_types = NULL, na = c('', 'NA', 'None'), ... ){
   # If the user has not authenticated, do it now.
   chchpd_has_token(ensure_token = TRUE)
-  
-  
+
+
   max_retries <- 5
-  for(i in 0:max_retries){
+  for (i in 0:max_retries) {
     # Read everything as string.
     data <- try(googlesheets4::range_read(ss, sheet = sheet, range = range, col_types = 'c', na = na, ...), silent = TRUE)
-    if(!is(data, 'try-error')){
+    if (!is(data, 'try-error')) {
       break
     }
-    if(stringr::str_detect(str = attr(data, 'condition')$message, 'RESOURCE_EXHAUSTED') && i < max_retries){
-      wait_time <- min(120, (i+1)*30)
+    if (stringr::str_detect(str = attr(data, 'condition')$message, 'RESOURCE_EXHAUSTED') && i < max_retries){
+      wait_time <- min(120, (i + 1) * 30)
       print(glue::glue('Google responded with a \'RESOURCE_EXHAUSTED\' error and loading data may take a while. {max_retries - i} more attempts will be performed.\nRetry will be performed in {wait_time} seconds ...\n'))
-    } else if(stringr::str_detect(str = attr(data, 'condition')$message, 'RESOURCE_EXHAUSTED') && i == max_retries) {
+    } else if (stringr::str_detect(str = attr(data, 'condition')$message, 'RESOURCE_EXHAUSTED') && i == max_retries) {
         stop('If you see this message, I have failed to load the data due to google\'s resource-quota limits. Please wait for a few minutes and re-run your script.')
     } else {
       stop(data)
     }
     Sys.sleep(wait_time)
   }
-  
+
   # Fix column types.
   data <- suppressMessages(readr::type_convert(data, col_types = col_types, na = na))
   return(data)
@@ -62,16 +62,16 @@ import_helper_googlesheet <- function(dataset) {
   if (dataset == 'session_code_map') {
     data <- gs_read_helper(ss = chchpd_env$subj_session_map_file_id,
                           col_types = readr::cols(standardised_session_id = readr::col_character()))
-    
+
   } else if (dataset == 'participants') {
     data <- gs_read_helper(
       ss = chchpd_env$participant_file_id,
       na = c('NA', 'None'))
-    
+
   } else if (dataset == 'sessions') {
     data <- gs_read_helper(ss = chchpd_env$session_file_id,
                           col_types = readr::cols(MRIScanNo = readr::col_character()))
-    
+
   } else if (dataset == 'mds_updrs') {
     data <- gs_read_helper(
       ss = chchpd_env$clinical_file_id,
@@ -86,7 +86,7 @@ import_helper_googlesheet <- function(dataset) {
       ss = chchpd_env$clinical_file_id,
       sheet = 'Old_UPDRS',
       na = c('na', 'NA', 'NA1', 'NA2', 'NA3', 'NA4', 'NA5', 'NA6', 'UR'))
-    
+
   } else if (dataset == 'hads') {
     data <- gs_read_helper(
       ss = chchpd_env$clinical_file_id,
@@ -112,43 +112,43 @@ import_helper_googlesheet <- function(dataset) {
       na = 'NA',
       col_types = readr::cols(pdq = readr::col_number())
     )
-    
+
   } else if (dataset == 'mri') {
     data <- gs_read_helper(ss = chchpd_env$scan_file_id,
                           sheet = 'MRI_scans',
-                          col_types = readr::cols(`Scan #` = readr::col_character(), 
-                                                  `Remapped Scan #` = readr::col_character(), 
-                                                  ASL = readr::col_character(), 
-                                                  FLAIR = readr::col_character(), 
-                                                  T2 = readr::col_character(), 
-                                                  fcMRI = readr::col_character(), 
+                          col_types = readr::cols(`Scan #` = readr::col_character(),
+                                                  `Remapped Scan #` = readr::col_character(),
+                                                  ASL = readr::col_character(),
+                                                  FLAIR = readr::col_character(),
+                                                  T2 = readr::col_character(),
+                                                  fcMRI = readr::col_character(),
                                                   FieldMap = readr::col_character(),
-                                                  `SPGR QSM` = readr::col_character(), 
-                                                  `DTI, B=2500,2mm` = readr::col_character(), 
+                                                  `SPGR QSM` = readr::col_character(),
+                                                  `DTI, B=2500,2mm` = readr::col_character(),
                                                   PEPOLAR = readr::col_character()))
-    
+
   } else if (dataset == 'pet') {
     data <- gs_read_helper(ss = chchpd_env$scan_file_id,
-                          sheet = 'PET_scans', 
+                          sheet = 'PET_scans',
                           col_types = readr::cols(perfusion_PET_scan = readr::col_character(),
                                                   amyloid_PET_scan = readr::col_character(),
-                                                  Injected = readr::col_character()                                                   
+                                                  Injected = readr::col_character()
                           )
     )
-                           
+
   } else if (dataset == 'bloods') {
     data <- gs_read_helper(
       ss = chchpd_env$bloods_file_id,
       sheet = 'data'
     )
-    
+
   } else if (dataset == 'hallucinations') {
     data <- gs_read_helper(
       ss = chchpd_env$clinical_file_id,
       sheet = 'Hallucinations Questionnaire',
       na = c('N/A', 'NA', 'NA1', 'NA2', 'NA3',
              'NA4', 'NA5', 'NA6', 'UR'),
-      col_types = readr::cols(hallucinations_date = readr::col_date(), 
+      col_types = readr::cols(hallucinations_date = readr::col_date(),
                               `Q2-D` = readr::col_number(),
                               `Q3-D` = readr::col_number(),
                               `Q6-D` = readr::col_number(),
@@ -197,8 +197,8 @@ import_helper <- function(dataset) {
     run_silent <- getOption('chchpd_suppress_warnings', default = TRUE)
 
     print_message <- TRUE
-    while( as.numeric(difftime(Sys.time(), sheet_modified_time, units = 'sec')) < 10 ){
-      if (print_message){
+    while (as.numeric(difftime(Sys.time(), sheet_modified_time, units = 'sec')) < 10) {
+      if (print_message) {
         print('The specified googlesheet is updating, please wait ...')
         print_message <- FALSE
       }
@@ -208,7 +208,7 @@ import_helper <- function(dataset) {
 
     sanity_check <- FALSE
 
-    while (!sanity_check){
+    while (!sanity_check) {
 
       if (run_silent) {
         data <-
@@ -300,12 +300,12 @@ get_googlesheet_modifiedtime <- function(dataset) {
 #' @export
 google_authenticate <- function(email = chchpd_user(),
                                 use_server = chchpd_check_rstudio_server()) {
-  googlesheets4::gs4_auth(email = email, 
+  googlesheets4::gs4_auth(email = email,
                           scopes = c("https://www.googleapis.com/auth/spreadsheets.readonly",
                                         "https://www.googleapis.com/auth/drive.readonly",
-                                        "https://www.googleapis.com/auth/drive.metadata.readonly"), 
+                                        "https://www.googleapis.com/auth/drive.metadata.readonly"),
                           use_oob = use_server)
-  
+
   token <- googlesheets4::gs4_token()
   googledrive::drive_auth(token = token)
 }
@@ -362,11 +362,11 @@ import_participants <- function(anon_id = FALSE, identifiers = FALSE) {
     # use the age from the session table (i.e. age at which the data was
     # gathered):
     dplyr::mutate(age_today =
-                    round(lubridate::interval(birth_date, lubridate::today())/
+                    round(lubridate::interval(birth_date, lubridate::today()) /
                             lubridate::years(1),
                           digits = 1)) %>%
     dplyr::mutate(age_at_death =
-                    round(lubridate::interval(birth_date, date_of_death)/
+                    round(lubridate::interval(birth_date, date_of_death) /
                             lubridate::years(1),
                           digits = 1))
 
@@ -455,7 +455,7 @@ import_sessions <- function(from_study = NULL, exclude = TRUE, print_exclude_sum
     excluded_session <- sessions %>%
       dplyr::filter(!is.na(study_excluded) & study_excluded == TRUE)
 
-    if (print_exclude_summary & nrow(excluded_session) > 0){
+    if (print_exclude_summary & nrow(excluded_session) > 0) {
       cat('Excluded cases:')
       exclusion_summary = excluded_session %>%
         dplyr::ungroup() %>%
@@ -759,7 +759,7 @@ import_medications <- function(concise = TRUE) {
   # each type of medication (mg/day).
 
   # replace all NAs with 0 in the medication dose columns (from 6 onwards):
-  meds[6:(ncol(meds)-2)][is.na(meds[6:(ncol(meds)-2)])] <- 0
+  meds[6:(ncol(meds) - 2)][is.na(meds[6:(ncol(meds) - 2)])] <- 0
 
   ## calculate the LED subtotal for each type of medication.
   # total immediate release l-dopa - combination of sinemet, madopar, sindopa,
@@ -782,7 +782,7 @@ import_medications <- function(concise = TRUE) {
                     dplyr::if_else(cr_entacapone > 0,
                                    (cr_entacapone * 0.75 * 0.33),
                                    dplyr::if_else(cr_tolcapone > 0,
-                                                  (cr_tolcapone * 0.75 *0.5), 0)))
+                                                  (cr_tolcapone * 0.75 * 0.5), 0)))
 
   # conversion of dopamine agonists and other PD meds
   meds %<>% dplyr::mutate(
@@ -807,8 +807,8 @@ import_medications <- function(concise = TRUE) {
   # Anticholinergics are not included in LED calculations but make an indicator
   # column anyway:
   meds <- dplyr::mutate(meds, anticholinergics =
-                         as.factor(ifelse ((orphenadrine > 0 | benztropine > 0 |
-                                              procyclidine > 0), 'Yes', 'No')))
+                         as.factor(ifelse((orphenadrine > 0 | benztropine > 0 |
+                                             procyclidine > 0), 'Yes', 'No')))
 
   # calculate levodopa equivalent dose:
   meds %<>% dplyr::mutate(
@@ -966,7 +966,7 @@ import_MRI <- function(exclude = TRUE, print_exclude_summary = TRUE) {
     excluded_MRI <- MRI %>%
       dplyr::filter(!is.na(mri_excluded) & mri_excluded != 'Included')
 
-    if (print_exclude_summary & nrow(excluded_MRI)>0){
+    if (print_exclude_summary & nrow(excluded_MRI) > 0) {
       cat('Excluded cases:')
       excluded_MRI %>%
         dplyr::select(subject_id, scan_number, scan_date) %>%
