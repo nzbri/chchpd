@@ -798,12 +798,12 @@ import_medications <- function(concise = TRUE) {
     # for oral formulations. If on sublingual formulations need to use
     # conversion factor (* 80). Tim does not have any patients taking sublingual
     # formulations.
+    rasagiline.led = rasagiline * 100, # ref = syst review. Newly added in 2022,
+    # as Pharmac has replaced selegiline with it (note it is more potent).
     rotigotine.led = rotigotine * 30, # ref = syst review
     duodopa.led = duodopa * 1.11 # ref = syst review. Only available to those
     # in clinical trial.
   )
-  # Rasagiline (conversion factor * 100) #ref = syst review. Has not been
-  # included since it is currently not available in NZ.
 
   # Anticholinergics are not included in LED calculations but make an indicator
   # column anyway:
@@ -816,7 +816,7 @@ import_medications <- function(concise = TRUE) {
     LED = (ldopa + cr_ldopa + comt_ir + comt_cr + amantadine.led +
              apomorphine.led + bromocriptine.led + pergolide.led +
              lisuride.led + ropinirole.led + pramipexole.led +
-             selegiline.led + rotigotine.led),
+             selegiline.led + rasagiline.led + rotigotine.led),
     LED = round(LED, digits = 2))
 
   # some people got multiple meds assessments per overall session
