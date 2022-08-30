@@ -2,7 +2,7 @@
 % Please edit documentation in R/import_data.R
 \name{import_hallucinations}
 \alias{import_hallucinations}
-\title{Import data from the Sydney hallucinations questionnaire.}
+\title{Import data from the Sydney PsycH-Q hallucinations questionnaire.}
 \usage{
 import_hallucinations()
 }
@@ -11,7 +11,7 @@ A dataframe containing the hallucination data.
 }
 \description{
 \code{import_hallucinations} Get patient and significant-other ratings of
-hallucinations and delusions, usinf the sacle developed by Prof. Simon Lewis'
+hallucinations and delusions, using the scale developed by Prof. Simon Lewis'
 team in Sydney.
 }
 \examples{
