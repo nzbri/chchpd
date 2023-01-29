@@ -35,15 +35,19 @@ check_permitted_package <- function(env = parent.frame()) {
 }
 
 #' Default Google app to use with chchpd:
-chchpd_oauth_app <- function() {
+chchpd_oauth_app <- function(use_server=NULL) {
+  if (is.null(use_server)){
+    use_server = chchpd_check_rstudio_server()
+  }
+  
   check_permitted_package(parent.frame())
-  coa()
+  coa(use_server)
 }
 
 #' Check whether RStudio is running in server mode:
 chchpd_check_rstudio_server <- function(){
   check_server <- try(rstudioapi::versionInfo()$mode == 'server', silent = TRUE)
-  if(length(check_server) == 0 || is(T, 'try-error')){
+  if(length(check_server) == 0 || is(check_server, 'try-error')){
     check_server <- FALSE
   }
   invisible(check_server)
