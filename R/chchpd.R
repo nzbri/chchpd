@@ -79,8 +79,8 @@ chchpd_env$cached <- list() # store imported dataframes here by name
   # Configure googledrive and googlesheets to use CHCHPD application. This
   # improves issues related to exhausting Google's resources.
   # Currently, this only allows @nzbri.org email addresses to login.
-  invisible(googlesheets4::gs4_auth_configure(app = chchpd_oauth_app()))
-  invisible(googledrive::drive_auth_configure(app = chchpd_oauth_app()))
+  invisible(googlesheets4::gs4_auth_configure(app = chchpd_oauth_app(use_server=chchpd_check_rstudio_server())))
+  invisible(googledrive::drive_auth_configure(app = chchpd_oauth_app(use_server=chchpd_check_rstudio_server())))
 
   invisible()
 }
