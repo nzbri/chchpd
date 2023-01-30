@@ -4,7 +4,7 @@
 \alias{chchpd_oauth_app}
 \title{Default Google app to use with chchpd:}
 \usage{
-chchpd_oauth_app()
+chchpd_oauth_app(use_server = NULL)
 }
 \description{
 Default Google app to use with chchpd:
