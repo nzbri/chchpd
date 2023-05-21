@@ -36,7 +36,8 @@ Imports: assertthat,
     tidyr (>= 1.3.0),
     usethis (>= 2.1.6),
     rlang (>= 1.0.6),
-    base64enc (>= 0.1)
+    base64enc (>= 0.1),
+    rstudioapi (>=0.14)
 Remotes:
     https://github.com/r-lib/gargle
 RoxygenNote: 7.2.3
