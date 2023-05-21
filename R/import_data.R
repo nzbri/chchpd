@@ -302,8 +302,8 @@ get_googlesheet_modifiedtime <- function(dataset) {
 google_authenticate <- function(email = chchpd_user(),
                                 use_server = chchpd_check_rstudio_server()) {
   
-  invisible(googlesheets4::gs4_auth_configure(app = chchpd_oauth_app(use_server)))
-  invisible(googledrive::drive_auth_configure(app = chchpd_oauth_app(use_server)))
+  invisible(googlesheets4::gs4_auth_configure(client = chchpd_oauth_app(use_server)))
+  invisible(googledrive::drive_auth_configure(client = chchpd_oauth_app(use_server)))
   
   googlesheets4::gs4_auth(email = email,
                           scopes = c("https://www.googleapis.com/auth/spreadsheets.readonly",
