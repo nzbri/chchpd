@@ -46,8 +46,8 @@ chchpd_oauth_app <- function(use_server=NULL) {
 
 #' Check whether RStudio is running in server mode:
 chchpd_check_rstudio_server <- function(){
-  check_server <- try(rstudioapi::versionInfo()$mode == 'server', silent = TRUE)
-  if(length(check_server) == 0 || is(check_server, 'try-error')){
+  check_server <- TRUE
+  if(rstudioapi::isAvailable() && (rstudioapi::versionInfo()$mode != 'server')){
     check_server <- FALSE
   }
   invisible(check_server)
