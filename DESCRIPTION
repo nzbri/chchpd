@@ -1,7 +1,7 @@
 Package: chchpd
 Type: Package
 Title: Manage and Manipulate Christchurch Parkinson's Studies Data
-Version: 0.5.3
+Version: 0.5.4
 Authors@R: c(
     person('Michael', 'MacAskill', email = 'michael.macaskill@nzbri.org', 
     role = c('cre')),
@@ -21,7 +21,7 @@ Encoding: UTF-8
 LazyData: true
 Imports: assertthat,
     dplyr (>= 1.0.10),
-    gargle (> 1.2.1),
+    gargle (>= 1.4.0),
     ggplot2 (>= 3.3.6),
     googlesheets4 (>= 1.1.0),
     googledrive (>= 2.1.0),
@@ -38,8 +38,6 @@ Imports: assertthat,
     rlang (>= 1.0.6),
     base64enc (>= 0.1),
     rstudioapi (>= 0.14)
-Remotes:
-    https://github.com/r-lib/gargle
 RoxygenNote: 7.2.3
 Depends: 
     R (>= 4.0.2)
